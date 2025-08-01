@@ -6,16 +6,27 @@ namespace WellnessPlatform.Models
     {
         public int Id { get; set; }
         public int HealthProfileId { get; set; }
+        [DataType(DataType.Date)]
+        [Display(Name = "Test Date")]
         public DateTime TestDate { get; set; }
         
         [Required]
         [StringLength(100)]
         public string BiomarkerName { get; set; } = string.Empty;
         
+        [Range(0.01, 10000, ErrorMessage = "Biomarker value must be between 0.01 and 10,000")]
         public decimal Value { get; set; }
+        
+        [Range(0.01, 10000, ErrorMessage = "Reference range minimum must be between 0.01 and 10,000")]
         public decimal? ReferenceRangeMin { get; set; }
+        
+        [Range(0.01, 10000, ErrorMessage = "Reference range maximum must be between 0.01 and 10,000")]
         public decimal? ReferenceRangeMax { get; set; }
+        
+        [Range(0.01, 10000, ErrorMessage = "Optimal range minimum must be between 0.01 and 10,000")]
         public decimal? OptimalRangeMin { get; set; }
+        
+        [Range(0.01, 10000, ErrorMessage = "Optimal range maximum must be between 0.01 and 10,000")]
         public decimal? OptimalRangeMax { get; set; }
         
         [Required]

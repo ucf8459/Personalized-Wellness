@@ -1,0 +1,479 @@
+@page "/data-entry"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using WellnessPlatform.Data
+@using WellnessPlatform.Models
+@using WellnessPlatform.Services
+@using System.ComponentModel.DataAnnotations
+@inject UserManager<IdentityUser> UserManager
+@inject WellnessContext Context
+@inject DataValidationService ValidationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Data Entry - Wellness Platform</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-pencil-square"></i> Data Entry</h2>
+            <p class="text-muted">Enter your health data with comprehensive validation</p>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="dataEntryTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="biomarker-tab" data-bs-toggle="tab" data-bs-target="#biomarker" type="button" role="tab">
+                        <i class="bi bi-graph-up"></i> Biomarkers
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="promis-tab" data-bs-toggle="tab" data-bs-target="#promis" type="button" role="tab">
+                        <i class="bi bi-clipboard2-check"></i> PROMIS
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="lifestyle-tab" data-bs-toggle="tab" data-bs-target="#lifestyle" type="button" role="tab">
+                        <i class="bi bi-heart-pulse"></i> Lifestyle
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="dataEntryTabContent">
+        <!-- Biomarker Entry -->
+        <div class="tab-pane fade show active" id="biomarker" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-graph-up"></i> Biomarker Data Entry</h5>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@biomarkerEntry" OnValidSubmit="HandleBiomarkerSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="biomarkerName" class="form-label">Biomarker Name *</label>
+                                    <InputText id="biomarkerName" class="form-control" @bind-Value="biomarkerEntry.BiomarkerName" />
+                                    <ValidationMessage For="@(() => biomarkerEntry.BiomarkerName)" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="biomarkerValue" class="form-label">Value *</label>
+                                    <InputNumber id="biomarkerValue" class="form-control" @bind-Value="biomarkerEntry.Value" />
+                                    <ValidationMessage For="@(() => biomarkerEntry.Value)" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="biomarkerUnits" class="form-label">Units *</label>
+                                    <InputText id="biomarkerUnits" class="form-control" @bind-Value="biomarkerEntry.Units" />
+                                    <ValidationMessage For="@(() => biomarkerEntry.Units)" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="biomarkerTestDate" class="form-label">Test Date *</label>
+                                    <InputDate id="biomarkerTestDate" class="form-control" @bind-Value="biomarkerEntry.TestDate" />
+                                    <ValidationMessage For="@(() => biomarkerEntry.TestDate)" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="referenceMin" class="form-label">Reference Min</label>
+                                    <InputNumber id="referenceMin" class="form-control" @bind-Value="biomarkerEntry.ReferenceRangeMin" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="referenceMax" class="form-label">Reference Max</label>
+                                    <InputNumber id="referenceMax" class="form-control" @bind-Value="biomarkerEntry.ReferenceRangeMax" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="optimalMin" class="form-label">Optimal Min</label>
+                                    <InputNumber id="optimalMin" class="form-control" @bind-Value="biomarkerEntry.OptimalRangeMin" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="optimalMax" class="form-label">Optimal Max</label>
+                                    <InputNumber id="optimalMax" class="form-control" @bind-Value="biomarkerEntry.OptimalRangeMax" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Save Biomarker
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROMIS Entry -->
+        <div class="tab-pane fade" id="promis" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-clipboard2-check"></i> PROMIS Assessment Entry</h5>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@promisEntry" OnValidSubmit="HandlePromisSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="promisDomain" class="form-label">Domain *</label>
+                                    <InputSelect id="promisDomain" class="form-control" @bind-Value="promisEntry.Domain">
+                                        <option value="">Select Domain</option>
+                                        <option value="Physical Function">Physical Function</option>
+                                        <option value="Fatigue">Fatigue</option>
+                                        <option value="Depression">Depression</option>
+                                        <option value="Anxiety">Anxiety</option>
+                                        <option value="Pain">Pain</option>
+                                        <option value="Sleep">Sleep</option>
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => promisEntry.Domain)" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="promisTScore" class="form-label">T-Score *</label>
+                                    <InputNumber id="promisTScore" class="form-control" @bind-Value="promisEntry.TScore" />
+                                    <ValidationMessage For="@(() => promisEntry.TScore)" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="promisPercentile" class="form-label">Percentile Rank</label>
+                                    <InputNumber id="promisPercentile" class="form-control" @bind-Value="promisEntry.PercentileRank" />
+                                    <ValidationMessage For="@(() => promisEntry.PercentileRank)" />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="promisItems" class="form-label">Items Answered *</label>
+                                    <InputNumber id="promisItems" class="form-control" @bind-Value="promisEntry.ItemsAnswered" />
+                                    <ValidationMessage For="@(() => promisEntry.ItemsAnswered)" />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="promisDate" class="form-label">Assessment Date *</label>
+                                    <InputDate id="promisDate" class="form-control" @bind-Value="promisEntry.AssessmentDate" />
+                                    <ValidationMessage For="@(() => promisEntry.AssessmentDate)" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Save PROMIS
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lifestyle Entry -->
+        <div class="tab-pane fade" id="lifestyle" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-heart-pulse"></i> Lifestyle Metrics Entry</h5>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@lifestyleEntry" OnValidSubmit="HandleLifestyleSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="sleepHours" class="form-label">Sleep Hours</label>
+                                    <InputNumber id="sleepHours" class="form-control" @bind-Value="lifestyleEntry.SleepHours" />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="sleepQuality" class="form-label">Sleep Quality (1-10)</label>
+                                    <InputNumber id="sleepQuality" class="form-control" @bind-Value="lifestyleEntry.SleepQuality" />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="exerciseMinutes" class="form-label">Exercise Minutes</label>
+                                    <InputNumber id="exerciseMinutes" class="form-control" @bind-Value="lifestyleEntry.ExerciseMinutes" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="exerciseIntensity" class="form-label">Exercise Intensity (1-10)</label>
+                                    <InputNumber id="exerciseIntensity" class="form-control" @bind-Value="lifestyleEntry.ExerciseIntensity" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="stressLevel" class="form-label">Stress Level (1-10)</label>
+                                    <InputNumber id="stressLevel" class="form-control" @bind-Value="lifestyleEntry.StressLevel" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="energyLevel" class="form-label">Energy Level (1-10)</label>
+                                    <InputNumber id="energyLevel" class="form-control" @bind-Value="lifestyleEntry.EnergyLevel" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="moodRating" class="form-label">Mood Rating (1-10)</label>
+                                    <InputNumber id="moodRating" class="form-control" @bind-Value="lifestyleEntry.MoodRating" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="weight" class="form-label">Weight (kg)</label>
+                                    <InputNumber id="weight" class="form-control" @bind-Value="lifestyleEntry.Weight" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="bodyFat" class="form-label">Body Fat %</label>
+                                    <InputNumber id="bodyFat" class="form-control" @bind-Value="lifestyleEntry.BodyFatPercentage" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="lifestyleDate" class="form-label">Date *</label>
+                                    <InputDate id="lifestyleDate" class="form-control" @bind-Value="lifestyleEntry.RecordDate" />
+                                    <ValidationMessage For="@(() => lifestyleEntry.RecordDate)" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Save Lifestyle Metric
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Validation Results -->
+    @if (validationErrors.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-danger">
+                    <h6><i class="bi bi-exclamation-triangle"></i> Validation Errors</h6>
+                    <ul class="mb-0">
+                        @foreach (var error in validationErrors)
+                        {
+                            <li>@error</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Success Message -->
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i> @successMessage
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private BiomarkerResult biomarkerEntry = new();
+    private PromisResult promisEntry = new();
+    private LifestyleMetric lifestyleEntry = new();
+    private List<string> validationErrors = new();
+    private string successMessage = string.Empty;
+    private HealthProfile? healthProfile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHealthProfile();
+        InitializeEntries();
+    }
+
+    private async Task LoadHealthProfile()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var identityUser = await UserManager.GetUserAsync(user);
+            if (identityUser != null)
+            {
+                healthProfile = await Context.HealthProfiles
+                    .FirstOrDefaultAsync(h => h.UserId == identityUser.Id);
+            }
+        }
+    }
+
+    private void InitializeEntries()
+    {
+        biomarkerEntry = new BiomarkerResult
+        {
+            TestDate = DateTime.Today,
+            Status = BiomarkerStatus.Normal
+        };
+
+        promisEntry = new PromisResult
+        {
+            AssessmentDate = DateTime.Today,
+            ItemsAnswered = 1,
+            TScore = 50
+        };
+
+        lifestyleEntry = new LifestyleMetric
+        {
+            RecordDate = DateTime.Today
+        };
+    }
+
+    private async Task HandleBiomarkerSubmit()
+    {
+        validationErrors.Clear();
+        successMessage = string.Empty;
+
+        if (healthProfile == null)
+        {
+            validationErrors.Add("Health profile not found. Please ensure you are logged in.");
+            return;
+        }
+
+        biomarkerEntry.HealthProfileId = healthProfile.Id;
+
+        // Custom validation
+        var validationResult = ValidationService.ValidateBiomarkerResult(biomarkerEntry);
+        if (validationResult != ValidationResult.Success)
+        {
+            validationErrors.Add(validationResult.ErrorMessage ?? "Validation failed");
+            return;
+        }
+
+        try
+        {
+            Context.BiomarkerResults.Add(biomarkerEntry);
+            await Context.SaveChangesAsync();
+            successMessage = $"Biomarker '{biomarkerEntry.BiomarkerName}' saved successfully!";
+            InitializeEntries();
+        }
+        catch (Exception ex)
+        {
+            validationErrors.Add($"Error saving biomarker: {ex.Message}");
+        }
+    }
+
+    private async Task HandlePromisSubmit()
+    {
+        validationErrors.Clear();
+        successMessage = string.Empty;
+
+        if (healthProfile == null)
+        {
+            validationErrors.Add("Health profile not found. Please ensure you are logged in.");
+            return;
+        }
+
+        promisEntry.HealthProfileId = healthProfile.Id;
+
+        // Custom validation
+        var validationResult = ValidationService.ValidatePromisResult(promisEntry);
+        if (validationResult != ValidationResult.Success)
+        {
+            validationErrors.Add(validationResult.ErrorMessage ?? "Validation failed");
+            return;
+        }
+
+        try
+        {
+            Context.PromisResults.Add(promisEntry);
+            await Context.SaveChangesAsync();
+            successMessage = $"PROMIS '{promisEntry.Domain}' assessment saved successfully!";
+            InitializeEntries();
+        }
+        catch (Exception ex)
+        {
+            validationErrors.Add($"Error saving PROMIS: {ex.Message}");
+        }
+    }
+
+    private async Task HandleLifestyleSubmit()
+    {
+        validationErrors.Clear();
+        successMessage = string.Empty;
+
+        if (healthProfile == null)
+        {
+            validationErrors.Add("Health profile not found. Please ensure you are logged in.");
+            return;
+        }
+
+        lifestyleEntry.HealthProfileId = healthProfile.Id;
+
+        // Custom validation
+        var validationResult = ValidationService.ValidateLifestyleMetric(lifestyleEntry);
+        if (validationResult != ValidationResult.Success)
+        {
+            validationErrors.Add(validationResult.ErrorMessage ?? "Validation failed");
+            return;
+        }
+
+        try
+        {
+            Context.LifestyleMetrics.Add(lifestyleEntry);
+            await Context.SaveChangesAsync();
+            successMessage = "Lifestyle metrics saved successfully!";
+            InitializeEntries();
+        }
+        catch (Exception ex)
+        {
+            validationErrors.Add($"Error saving lifestyle metric: {ex.Message}");
+        }
+    }
+} 

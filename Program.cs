@@ -27,6 +27,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 
 // Register custom services
 builder.Services.AddScoped<TreatmentRecommendationService>();
+builder.Services.AddScoped<DataValidationService>();
 
 var app = builder.Build();
 

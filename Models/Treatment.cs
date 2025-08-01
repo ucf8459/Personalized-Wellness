@@ -32,6 +32,8 @@ namespace WellnessPlatform.Models
         [StringLength(100)]
         public string? CostRange { get; set; }
         
+        [Range(1, 5, ErrorMessage = "Safety rating must be between 1 and 5")]
+        [Display(Name = "Safety Rating")]
         public int SafetyRating { get; set; } // 1-5 scale
         
         // Navigation properties
