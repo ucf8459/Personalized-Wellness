@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WellnessPlatform.Components;
 using WellnessPlatform.Data;
+using WellnessPlatform.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,9 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     options.Password.RequireLowercase = true;
 })
 .AddEntityFrameworkStores<WellnessContext>();
+
+// Register custom services
+builder.Services.AddScoped<TreatmentRecommendationService>();
 
 var app = builder.Build();
 

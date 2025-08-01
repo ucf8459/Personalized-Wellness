@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WellnessPlatform")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+14a761fc5c2af26ab36e1a241738177b01bd664c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bfe8b5c207a5288f52191d0a176508d0e2f06f5e")]
 [assembly: System.Reflection.AssemblyProductAttribute("WellnessPlatform")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WellnessPlatform")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

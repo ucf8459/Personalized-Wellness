@@ -1,0 +1,429 @@
+@page "/treatments"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using WellnessPlatform.Data
+@using WellnessPlatform.Models
+@using WellnessPlatform.Services
+@inject UserManager<IdentityUser> UserManager
+@inject WellnessContext Context
+@inject TreatmentRecommendationService RecommendationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Treatment Recommendations - Wellness Platform</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-capsule"></i> Treatment Recommendations</h2>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" @onclick="LoadRecommendations">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <button type="button" class="btn btn-outline-success" @onclick="ShowAllRecommendations">
+                        <i class="bi bi-eye"></i> All
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" @onclick="ShowHighPriority">
+                        <i class="bi bi-exclamation-triangle"></i> High Priority
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Analyzing your health data and generating recommendations...</p>
+        </div>
+    }
+    else if (recommendations.Any())
+    {
+        <!-- Health Issues Summary -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-clipboard2-pulse"></i> Health Issues Identified</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @if (biomarkerIssues.Any())
+                            {
+                                <div class="col-md-6">
+                                    <h6 class="text-primary"><i class="bi bi-graph-up"></i> Biomarker Issues</h6>
+                                    <ul class="list-group list-group-flush">
+                                        @foreach (var issue in biomarkerIssues)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>@issue.BiomarkerName</strong>
+                                                    <div class="text-muted small">
+                                                        @issue.CurrentValue @issue.Units (Optimal: @issue.OptimalRange @issue.Units)
+                                                    </div>
+                                                </div>
+                                                <span class="badge @GetSeverityBadgeClass(issue.Severity)">
+                                                    @issue.Status (@issue.Trend)
+                                                </span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                            @if (promisIssues.Any())
+                            {
+                                <div class="col-md-6">
+                                    <h6 class="text-success"><i class="bi bi-clipboard2-check"></i> PROMIS Issues</h6>
+                                    <ul class="list-group list-group-flush">
+                                        @foreach (var issue in promisIssues)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>@issue.Domain</strong>
+                                                    <div class="text-muted small">
+                                                        T-score: @issue.TScore (Percentile: @issue.PercentileRank%)
+                                                    </div>
+                                                </div>
+                                                <span class="badge @GetSeverityBadgeClass(issue.Severity)">
+                                                    @issue.Severity
+                                                </span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Treatment Recommendations -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-lightbulb"></i> Personalized Treatment Recommendations</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var recommendation in filteredRecommendations)
+                            {
+                                <div class="col-lg-6 col-xl-4 mb-4">
+                                    <div class="card h-100 border-@GetPriorityBorderClass(recommendation.PriorityScore)">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">@recommendation.Treatment.Name</h6>
+                                            <span class="badge @GetPriorityBadgeClass(recommendation.PriorityScore)">
+                                                Priority: @recommendation.PriorityScore
+                                            </span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <span class="badge @GetEvidenceBadgeClass(recommendation.EvidenceLevel)">
+                                                    @recommendation.Treatment.EvidenceBadge
+                                                </span>
+                                                <span class="badge @GetSafetyBadgeClass(recommendation.SafetyRating)">
+                                                    Safety: @recommendation.SafetyRating/5
+                                                </span>
+                                                <span class="badge bg-info">
+                                                    @recommendation.Treatment.Category
+                                                </span>
+                                            </div>
+
+                                            <p class="card-text small">@recommendation.Treatment.Mechanism</p>
+
+                                            <div class="mb-3">
+                                                <strong>Dosage:</strong> @recommendation.Treatment.TypicalDosage<br>
+                                                <strong>Cost:</strong> @recommendation.Treatment.CostRange<br>
+                                                <strong>Monitoring:</strong> @recommendation.Treatment.MonitoringRequired
+                                            </div>
+
+                                            <div class="alert alert-info small">
+                                                <strong>Reasoning:</strong><br>
+                                                @recommendation.Reasoning
+                                            </div>
+
+                                            @if (!string.IsNullOrEmpty(recommendation.Treatment.CommonSideEffects))
+                                            {
+                                                <div class="alert alert-warning small">
+                                                    <strong>Side Effects:</strong><br>
+                                                    @recommendation.Treatment.CommonSideEffects
+                                                </div>
+                                            }
+
+                                            @if (!string.IsNullOrEmpty(recommendation.Treatment.Contraindications))
+                                            {
+                                                <div class="alert alert-danger small">
+                                                    <strong>Contraindications:</strong><br>
+                                                    @recommendation.Treatment.Contraindications
+                                                </div>
+                                            }
+
+                                            <div class="d-grid gap-2">
+                                                <button class="btn btn-primary btn-sm" @onclick="() => StartTreatment(recommendation.Treatment)">
+                                                    <i class="bi bi-plus-circle"></i> Start Treatment
+                                                </button>
+                                                <button class="btn btn-outline-secondary btn-sm" @onclick="() => ViewTreatmentDetails(recommendation.Treatment)">
+                                                    <i class="bi bi-info-circle"></i> Learn More
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Treatments -->
+        @if (currentTreatments.Any())
+        {
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-clock-history"></i> Current Treatments</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Treatment</th>
+                                            <th>Started</th>
+                                            <th>Dosage</th>
+                                            <th>Effectiveness</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var treatment in currentTreatments)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@treatment.Treatment.Name</strong>
+                                                    <div class="text-muted small">@treatment.Treatment.Category</div>
+                                                </td>
+                                                <td>@treatment.StartDate.ToString("MMM yyyy")</td>
+                                                <td>@treatment.Dosage</td>
+                                                <td>
+                                                    @if (treatment.ResponseRating.HasValue)
+                                                    {
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            <i class="bi @(i <= treatment.ResponseRating ? "bi-star-fill text-warning" : "bi-star text-muted")"></i>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Not rated</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => RateTreatment(treatment)">
+                                                        <i class="bi bi-star"></i> Rate
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => StopTreatment(treatment)">
+                                                        <i class="bi bi-stop-circle"></i> Stop
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center">
+            <div class="alert alert-success">
+                <h4><i class="bi bi-check-circle"></i> Great News!</h4>
+                <p>No treatment recommendations at this time. Your biomarkers and PROMIS scores are within optimal ranges.</p>
+                <p class="mb-0">Continue monitoring your health and we'll provide recommendations if needed.</p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private List<TreatmentRecommendation> recommendations = new();
+    private List<TreatmentRecommendation> filteredRecommendations = new();
+    private List<BiomarkerIssue> biomarkerIssues = new();
+    private List<PromisIssue> promisIssues = new();
+    private List<UserTreatment> currentTreatments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRecommendations();
+    }
+
+    private async Task LoadRecommendations()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var identityUser = await UserManager.GetUserAsync(user);
+                if (identityUser != null)
+                {
+                    recommendations = await RecommendationService.GetRecommendationsAsync(identityUser.Id);
+                    filteredRecommendations = recommendations;
+
+                    // Load current treatments
+                    var healthProfile = await Context.HealthProfiles
+                        .Include(h => h.Treatments)
+                            .ThenInclude(ut => ut.Treatment)
+                        .FirstOrDefaultAsync(h => h.UserId == identityUser.Id);
+
+                    if (healthProfile != null)
+                    {
+                        currentTreatments = healthProfile.Treatments
+                            .Where(ut => ut.EndDate == null)
+                            .OrderByDescending(ut => ut.StartDate)
+                            .ToList();
+                    }
+
+                    // Extract issues for display
+                    ExtractIssues();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading recommendations: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ExtractIssues()
+    {
+        // This would be better implemented in the service, but for now we'll extract from recommendations
+        biomarkerIssues = new List<BiomarkerIssue>();
+        promisIssues = new List<PromisIssue>();
+
+        // For demo purposes, we'll create some sample issues
+        biomarkerIssues.Add(new BiomarkerIssue
+        {
+            BiomarkerName = "Vitamin D",
+            CurrentValue = 25,
+            OptimalRange = "30-80",
+            Status = BiomarkerStatus.Low,
+            Severity = 3,
+            Trend = "Stable",
+            Units = "ng/mL"
+        });
+
+        promisIssues.Add(new PromisIssue
+        {
+            Domain = "Physical Function",
+            TScore = 42,
+            Severity = "Moderate",
+            PercentileRank = 25
+        });
+    }
+
+    private void ShowAllRecommendations()
+    {
+        filteredRecommendations = recommendations;
+        StateHasChanged();
+    }
+
+    private void ShowHighPriority()
+    {
+        filteredRecommendations = recommendations.Where(r => r.PriorityScore >= 50).ToList();
+        StateHasChanged();
+    }
+
+    private async Task StartTreatment(Treatment treatment)
+    {
+        // Implementation for starting a treatment
+        // This would typically involve creating a UserTreatment record
+        Console.WriteLine($"Starting treatment: {treatment.Name}");
+    }
+
+    private void ViewTreatmentDetails(Treatment treatment)
+    {
+        // Implementation for viewing treatment details
+        Console.WriteLine($"Viewing details for: {treatment.Name}");
+    }
+
+    private async Task RateTreatment(UserTreatment userTreatment)
+    {
+        // Implementation for rating a treatment
+        Console.WriteLine($"Rating treatment: {userTreatment.Treatment.Name}");
+    }
+
+    private async Task StopTreatment(UserTreatment userTreatment)
+    {
+        // Implementation for stopping a treatment
+        Console.WriteLine($"Stopping treatment: {userTreatment.Treatment.Name}");
+    }
+
+    private string GetPriorityBadgeClass(int priorityScore) => priorityScore switch
+    {
+        >= 70 => "bg-danger",
+        >= 50 => "bg-warning",
+        >= 30 => "bg-info",
+        _ => "bg-secondary"
+    };
+
+    private string GetPriorityBorderClass(int priorityScore) => priorityScore switch
+    {
+        >= 70 => "danger",
+        >= 50 => "warning",
+        >= 30 => "info",
+        _ => "secondary"
+    };
+
+    private string GetEvidenceBadgeClass(EvidenceLevel level) => level switch
+    {
+        EvidenceLevel.SystematicReviews => "bg-warning text-dark",
+        EvidenceLevel.RandomizedTrials => "bg-info",
+        EvidenceLevel.CohortStudies => "bg-secondary",
+        _ => "bg-dark"
+    };
+
+    private string GetSafetyBadgeClass(int safetyRating) => safetyRating switch
+    {
+        5 => "bg-success",
+        4 => "bg-info",
+        3 => "bg-warning",
+        _ => "bg-danger"
+    };
+
+    private string GetSeverityBadgeClass(int severity) => severity switch
+    {
+        >= 4 => "bg-danger",
+        >= 2 => "bg-warning",
+        _ => "bg-info"
+    };
+
+    private string GetSeverityBadgeClass(string severity) => severity switch
+    {
+        "Severe" => "bg-danger",
+        "Moderate" => "bg-warning",
+        _ => "bg-info"
+    };
+} 

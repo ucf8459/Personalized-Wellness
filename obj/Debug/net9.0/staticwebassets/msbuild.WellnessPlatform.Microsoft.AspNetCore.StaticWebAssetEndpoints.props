@@ -28,13 +28,13 @@
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\charts.js'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"11138"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u00222tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\u0022"},{"Name":"Last-Modified","Value":"Fri, 01 Aug 2025 18:55:58 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"11138"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u00222tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\u0022"},{"Name":"Last-Modified","Value":"Fri, 01 Aug 2025 19:00:08 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/WellnessPlatform/js/charts.mx6n2lagjn.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\charts.js'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"mx6n2lagjn"},{"Name":"integrity","Value":"sha256-2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw="},{"Name":"label","Value":"_content/WellnessPlatform/js/charts.js"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"11138"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u00222tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\u0022"},{"Name":"Last-Modified","Value":"Fri, 01 Aug 2025 18:55:58 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"11138"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u00222tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\u0022"},{"Name":"Last-Modified","Value":"Fri, 01 Aug 2025 19:00:08 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/WellnessPlatform/lib/bootstrap/dist/css/bootstrap-grid.bqjiyaj88i.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\lib\bootstrap\dist\css\bootstrap-grid.css'))</AssetFile>
