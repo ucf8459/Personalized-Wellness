@@ -1,0 +1,853 @@
+@page "/data-import-export"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using WellnessPlatform.Models
+@using WellnessPlatform.Services
+@using Microsoft.AspNetCore.Authorization
+@inject UserManager<ApplicationUser> UserManager
+@inject DataImportExportService ImportExportService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+
+<PageTitle>Data Import/Export - Wellness Platform</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-upload"></i> Data Import/Export</h2>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm" @onclick="RefreshData">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" @onclick="ShowImport">
+                        <i class="bi bi-upload"></i> Import
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" @onclick="ShowExport">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="importExportTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="import-tab" data-bs-toggle="tab" data-bs-target="#import" type="button" role="tab">
+                        <i class="bi bi-upload"></i> Import Data
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
+                        <i class="bi bi-download"></i> Export Data
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="bulk-tab" data-bs-toggle="tab" data-bs-target="#bulk" type="button" role="tab">
+                        <i class="bi bi-files"></i> Bulk Import
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                        <i class="bi bi-file-earmark-text"></i> Reports
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="importExportTabContent">
+        <!-- Import Data -->
+        <div class="tab-pane fade show active" id="import" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-upload"></i> Import Health Data</h5>
+                    <p class="text-muted mb-0">Upload CSV files, Excel spreadsheets, or PDF lab reports to import your health data</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Single File Import</h6>
+                                </div>
+                                <div class="card-body">
+                                    <EditForm Model="importModel" OnValidSubmit="HandleImport">
+                                        <DataAnnotationsValidator />
+                                        <ValidationSummary />
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Import Type</label>
+                                            <InputSelect @bind-Value="importModel.ImportType" class="form-select">
+                                                <option value="@ImportType.Biomarkers">Biomarkers (Lab Results)</option>
+                                                <option value="@ImportType.Promis">PROMIS Assessments</option>
+                                                <option value="@ImportType.Lifestyle">Lifestyle Metrics</option>
+                                                <option value="@ImportType.PdfLabReport">PDF Lab Report</option>
+                                            </InputSelect>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">File</label>
+                                            <InputFile OnChange="HandleFileSelection" class="form-control" accept=".csv,.xlsx,.xls,.pdf" />
+                                            <div class="form-text">Supported formats: CSV, Excel (.xlsx, .xls), PDF</div>
+                                        </div>
+
+                                        @if (!string.IsNullOrEmpty(selectedFileName))
+                                        {
+                                            <div class="alert alert-info">
+                                                <i class="bi bi-file-earmark"></i>
+                                                <strong>Selected file:</strong> @selectedFileName
+                                            </div>
+                                        }
+
+                                        <button type="submit" class="btn btn-primary" disabled="@isImporting">
+                                            @if (isImporting)
+                                            {
+                                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                                <span>Importing...</span>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-upload me-2"></i>
+                                                <span>Import Data</span>
+                                            }
+                                        </button>
+                                    </EditForm>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Import Templates</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h6>Biomarkers Template</h6>
+                                        <p class="small text-muted">CSV format with columns: BiomarkerName,Value,Units,TestDate,Status,ReferenceRangeMin,ReferenceRangeMax</p>
+                                        <button class="btn btn-outline-secondary btn-sm" @onclick="DownloadTemplate" data-template="biomarkers">
+                                            <i class="bi bi-download"></i> Download Template
+                                        </button>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h6>PROMIS Template</h6>
+                                        <p class="small text-muted">CSV format with columns: Domain,TScore,PercentileRank,ItemsAnswered,AssessmentDate,SeverityLevel</p>
+                                        <button class="btn btn-outline-secondary btn-sm" @onclick="DownloadTemplate" data-template="promis">
+                                            <i class="bi bi-download"></i> Download Template
+                                        </button>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h6>Lifestyle Template</h6>
+                                        <p class="small text-muted">CSV format with columns: RecordDate,SleepHours,SleepQuality,ExerciseMinutes,ExerciseIntensity,StressLevel,EnergyLevel,MoodRating,Weight,BodyFatPercentage</p>
+                                        <button class="btn btn-outline-secondary btn-sm" @onclick="DownloadTemplate" data-template="lifestyle">
+                                            <i class="bi bi-download"></i> Download Template
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (importResult != null)
+                    {
+                        <div class="mt-4">
+                            <div class="card @(importResult.IsSuccessful ? "border-success" : "border-danger")">
+                                <div class="card-header">
+                                    <h6>Import Results</h6>
+                                </div>
+                                <div class="card-body">
+                                    @if (importResult.IsSuccessful)
+                                    {
+                                        <div class="alert alert-success">
+                                            <i class="bi bi-check-circle"></i>
+                                            <strong>Import successful!</strong> @importResult.SuccessCount records imported.
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            <strong>Import failed!</strong> Please check the errors below.
+                                        </div>
+                                    }
+
+                                    @if (importResult.Errors.Any())
+                                    {
+                                        <div class="mt-3">
+                                            <h6>Errors:</h6>
+                                            <ul class="list-group">
+                                                @foreach (var error in importResult.Errors)
+                                                {
+                                                    <li class="list-group-item list-group-item-danger">@error</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Data -->
+        <div class="tab-pane fade" id="export" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-download"></i> Export Health Data</h5>
+                    <p class="text-muted mb-0">Export your health data in various formats for backup or sharing with healthcare providers</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Export Options</h6>
+                                </div>
+                                <div class="card-body">
+                                    <EditForm Model="exportModel" OnValidSubmit="HandleExport">
+                                        <DataAnnotationsValidator />
+                                        <ValidationSummary />
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Export Format</label>
+                                            <InputSelect @bind-Value="exportModel.Format" class="form-select">
+                                                <option value="@ExportFormat.Csv">CSV (Comma Separated Values)</option>
+                                                <option value="@ExportFormat.Json">JSON (JavaScript Object Notation)</option>
+                                                <option value="@ExportFormat.Pdf">PDF (Portable Document Format)</option>
+                                                <option value="@ExportFormat.Excel">Excel (.xlsx)</option>
+                                            </InputSelect>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Date Range (Optional)</label>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <label class="form-label small">Start Date</label>
+                                                    <InputDate @bind-Value="exportModel.StartDate" class="form-control" />
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">End Date</label>
+                                                    <InputDate @bind-Value="exportModel.EndDate" class="form-control" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary" disabled="@isExporting">
+                                            @if (isExporting)
+                                            {
+                                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                                <span>Exporting...</span>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-download me-2"></i>
+                                                <span>Export Data</span>
+                                            }
+                                        </button>
+                                    </EditForm>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Export Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h6>What's included:</h6>
+                                        <ul class="list-unstyled">
+                                            <li><i class="bi bi-check text-success"></i> Biomarker results</li>
+                                            <li><i class="bi bi-check text-success"></i> PROMIS assessments</li>
+                                            <li><i class="bi bi-check text-success"></i> Treatment history</li>
+                                            <li><i class="bi bi-check text-success"></i> Lifestyle metrics</li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h6>Format details:</h6>
+                                        <ul class="list-unstyled small">
+                                            <li><strong>CSV:</strong> Standard spreadsheet format</li>
+                                            <li><strong>JSON:</strong> Structured data format</li>
+                                            <li><strong>PDF:</strong> Printable report format</li>
+                                            <li><strong>Excel:</strong> Advanced spreadsheet format</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (exportResult != null)
+                    {
+                        <div class="mt-4">
+                            <div class="card @(exportResult.IsSuccessful ? "border-success" : "border-danger")">
+                                <div class="card-header">
+                                    <h6>Export Results</h6>
+                                </div>
+                                <div class="card-body">
+                                    @if (exportResult.IsSuccessful)
+                                    {
+                                        <div class="alert alert-success">
+                                            <i class="bi bi-check-circle"></i>
+                                            <strong>Export successful!</strong>
+                                            <div class="mt-2">
+                                                <button class="btn btn-success btn-sm" @onclick="DownloadExport">
+                                                    <i class="bi bi-download"></i> Download @exportResult.FileName
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            <strong>Export failed!</strong>
+                                            <ul class="mt-2 mb-0">
+                                                @foreach (var error in exportResult.Errors)
+                                                {
+                                                    <li>@error</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Import -->
+        <div class="tab-pane fade" id="bulk" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-files"></i> Bulk Import</h5>
+                    <p class="text-muted mb-0">Upload multiple files at once for efficient data import</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Upload Multiple Files</h6>
+                                </div>
+                                <div class="card-body">
+                                    <InputFile OnChange="HandleBulkFileSelection" multiple class="form-control" accept=".csv,.xlsx,.xls,.pdf" />
+                                    <div class="form-text">Select multiple files to import at once</div>
+
+                                    @if (bulkFiles.Any())
+                                    {
+                                        <div class="mt-3">
+                                            <h6>Selected Files:</h6>
+                                            <div class="list-group">
+                                                @foreach (var file in bulkFiles)
+                                                {
+                                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <i class="bi bi-file-earmark"></i>
+                                                            @file.FileName
+                                                            <span class="badge bg-secondary ms-2">@file.Type</span>
+                                                        </div>
+                                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => RemoveBulkFile(file)">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <button class="btn btn-primary mt-3" @onclick="HandleBulkImport" disabled="@isBulkImporting">
+                                            @if (isBulkImporting)
+                                            {
+                                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                                <span>Importing @bulkFiles.Count files...</span>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-upload me-2"></i>
+                                                <span>Import @bulkFiles.Count Files</span>
+                                            }
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Bulk Import Progress</h6>
+                                </div>
+                                <div class="card-body">
+                                    @if (bulkImportResult != null)
+                                    {
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between">
+                                                <span>Progress</span>
+                                                <span>@bulkImportResult.Progress.ToString("F0")%</span>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar" style="width: @bulkImportResult.Progress%"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <h6>File Results:</h6>
+                                            @foreach (var fileResult in bulkImportResult.FileResults)
+                                            {
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <small>@fileResult.FileName</small>
+                                                    @if (fileResult.Success)
+                                                    {
+                                                        <span class="badge bg-success">@fileResult.SuccessCount imported</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">Failed</span>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">No bulk import in progress</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports -->
+        <div class="tab-pane fade" id="reports" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-file-earmark-text"></i> Generate Reports</h5>
+                    <p class="text-muted mb-0">Create specialized reports for healthcare providers or personal analysis</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Biomarker Report</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted">Generate a comprehensive biomarker analysis report with statistics and trends.</p>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Date Range (Optional)</label>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <label class="form-label small">Start Date</label>
+                                                <InputDate @bind-Value="reportModel.StartDate" class="form-control" />
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small">End Date</label>
+                                                <InputDate @bind-Value="reportModel.EndDate" class="form-control" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button class="btn btn-primary" @onclick="GenerateBiomarkerReport" disabled="@isGeneratingReport">
+                                        @if (isGeneratingReport)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                            <span>Generating...</span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-file-earmark-text me-2"></i>
+                                            <span>Generate Report</span>
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Report Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h6>Biomarker Report includes:</h6>
+                                        <ul class="list-unstyled">
+                                            <li><i class="bi bi-check text-success"></i> Test count per biomarker</li>
+                                            <li><i class="bi bi-check text-success"></i> Latest values and dates</li>
+                                            <li><i class="bi bi-check text-success"></i> Average, min, and max values</li>
+                                            <li><i class="bi bi-check text-success"></i> Status distribution (Optimal/Normal/Suboptimal)</li>
+                                            <li><i class="bi bi-check text-success"></i> Units and reference ranges</li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h6>Export format:</h6>
+                                        <p class="text-muted">CSV format for easy analysis in spreadsheet applications</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (reportResult != null)
+                    {
+                        <div class="mt-4">
+                            <div class="card @(reportResult.IsSuccessful ? "border-success" : "border-danger")">
+                                <div class="card-header">
+                                    <h6>Report Results</h6>
+                                </div>
+                                <div class="card-body">
+                                    @if (reportResult.IsSuccessful)
+                                    {
+                                        <div class="alert alert-success">
+                                            <i class="bi bi-check-circle"></i>
+                                            <strong>Report generated successfully!</strong>
+                                            <div class="mt-2">
+                                                <button class="btn btn-success btn-sm" @onclick="DownloadReport">
+                                                    <i class="bi bi-download"></i> Download @reportResult.FileName
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            <strong>Report generation failed!</strong>
+                                            <ul class="mt-2 mb-0">
+                                                @foreach (var error in reportResult.Errors)
+                                                {
+                                                    <li>@error</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ImportModel importModel = new();
+    private ExportModel exportModel = new();
+    private ReportModel reportModel = new();
+    private string selectedFileName = string.Empty;
+    private byte[] selectedFileData = new byte[0];
+    private string selectedFileContent = string.Empty;
+    private List<ImportFile> bulkFiles = new();
+    private ImportResult? importResult;
+    private ExportResult? exportResult;
+    private ExportResult? reportResult;
+    private BulkImportResult? bulkImportResult;
+    private bool isImporting = false;
+    private bool isExporting = false;
+    private bool isBulkImporting = false;
+    private bool isGeneratingReport = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserData();
+    }
+
+    private async Task LoadUserData()
+    {
+        // Initialize models with default values
+        importModel.ImportType = ImportType.Biomarkers;
+        exportModel.Format = ExportFormat.Csv;
+    }
+
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        selectedFileName = file.Name;
+        
+        using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        selectedFileData = ms.ToArray();
+        
+        // For CSV files, also read as text
+        if (file.Name.EndsWith(".csv"))
+        {
+            stream.Position = 0;
+            using var reader = new StreamReader(stream);
+            selectedFileContent = await reader.ReadToEndAsync();
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task HandleBulkFileSelection(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles())
+        {
+            var importFile = new ImportFile
+            {
+                FileName = file.Name,
+                Type = DetermineFileType(file.Name)
+            };
+
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            
+            if (file.Name.EndsWith(".csv"))
+            {
+                stream.Position = 0;
+                using var reader = new StreamReader(stream);
+                importFile.Content = await reader.ReadToEndAsync();
+            }
+            else
+            {
+                importFile.Data = ms.ToArray();
+            }
+
+            bulkFiles.Add(importFile);
+        }
+        
+        StateHasChanged();
+    }
+
+    private ImportType DetermineFileType(string fileName)
+    {
+        if (fileName.Contains("biomarker", StringComparison.OrdinalIgnoreCase) || 
+            fileName.Contains("lab", StringComparison.OrdinalIgnoreCase))
+            return ImportType.Biomarkers;
+        if (fileName.Contains("promis", StringComparison.OrdinalIgnoreCase))
+            return ImportType.Promis;
+        if (fileName.Contains("lifestyle", StringComparison.OrdinalIgnoreCase))
+            return ImportType.Lifestyle;
+        if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            return ImportType.PdfLabReport;
+        
+        return ImportType.Biomarkers; // Default
+    }
+
+    private async Task HandleImport()
+    {
+        isImporting = true;
+        importResult = null;
+        StateHasChanged();
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    if (importModel.ImportType == ImportType.PdfLabReport)
+                    {
+                        importResult = await ImportExportService.ParsePdfLabReportAsync(selectedFileData, userId);
+                    }
+                    else
+                    {
+                        importResult = await ImportExportService.ImportCsvDataAsync(selectedFileContent, userId, importModel.ImportType);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            importResult = new ImportResult { Errors = { ex.Message } };
+        }
+        finally
+        {
+            isImporting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleBulkImport()
+    {
+        isBulkImporting = true;
+        bulkImportResult = null;
+        StateHasChanged();
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    bulkImportResult = await ImportExportService.ImportBulkDataAsync(bulkFiles, userId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            bulkImportResult = new BulkImportResult();
+            bulkImportResult.FileResults.Add(new FileImportResult
+            {
+                FileName = "Bulk Import",
+                Success = false,
+                Errors = { ex.Message }
+            });
+        }
+        finally
+        {
+            isBulkImporting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveBulkFile(ImportFile file)
+    {
+        bulkFiles.Remove(file);
+        StateHasChanged();
+    }
+
+    private async Task HandleExport()
+    {
+        isExporting = true;
+        exportResult = null;
+        StateHasChanged();
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    exportResult = await ImportExportService.ExportHealthDataAsync(userId, exportModel.Format, exportModel.StartDate, exportModel.EndDate);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            exportResult = new ExportResult { Errors = { ex.Message } };
+        }
+        finally
+        {
+            isExporting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GenerateBiomarkerReport()
+    {
+        isGeneratingReport = true;
+        reportResult = null;
+        StateHasChanged();
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    reportResult = await ImportExportService.ExportBiomarkerReportAsync(userId, reportModel.StartDate, reportModel.EndDate);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            reportResult = new ExportResult { Errors = { ex.Message } };
+        }
+        finally
+        {
+            isGeneratingReport = false;
+            StateHasChanged();
+        }
+    }
+
+    private void DownloadTemplate()
+    {
+        // In a real implementation, this would generate and download template files
+        // For now, we'll just show a message
+        // You could implement this using JavaScript interop to trigger downloads
+    }
+
+    private void DownloadExport()
+    {
+        // In a real implementation, this would trigger a file download
+        // For now, we'll just show a message
+        // You could implement this using JavaScript interop to trigger downloads
+    }
+
+    private void DownloadReport()
+    {
+        // In a real implementation, this would trigger a file download
+        // For now, we'll just show a message
+        // You could implement this using JavaScript interop to trigger downloads
+    }
+
+    private void RefreshData()
+    {
+        importResult = null;
+        exportResult = null;
+        reportResult = null;
+        bulkImportResult = null;
+        selectedFileName = string.Empty;
+        selectedFileData = new byte[0];
+        selectedFileContent = string.Empty;
+        bulkFiles.Clear();
+        StateHasChanged();
+    }
+
+    private void ShowImport()
+    {
+        // Switch to import tab
+    }
+
+    private void ShowExport()
+    {
+        // Switch to export tab
+    }
+
+    public class ImportModel
+    {
+        public ImportType ImportType { get; set; }
+    }
+
+    public class ExportModel
+    {
+        public ExportFormat Format { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+    }
+
+    public class ReportModel
+    {
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+    }
+} 
