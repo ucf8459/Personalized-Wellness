@@ -32,6 +32,10 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9BcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/seanlaneve/Personalized Wellness/WellnessPlatform/Components/Pages/Admin.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9BZG1pbi5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/seanlaneve/Personalized Wellness/WellnessPlatform/Components/Pages/Biomarkers.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9CaW9tYXJrZXJzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 

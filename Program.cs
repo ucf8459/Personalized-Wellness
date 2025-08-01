@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WellnessPlatform.Components;
 using WellnessPlatform.Data;
+using WellnessPlatform.Models;
 using WellnessPlatform.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,7 +15,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddDbContext<WellnessContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => 
+builder.Services.AddDefaultIdentity<ApplicationUser>(options => 
 {
     options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = true;
@@ -28,6 +29,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 // Register custom services
 builder.Services.AddScoped<TreatmentRecommendationService>();
 builder.Services.AddScoped<DataValidationService>();
+builder.Services.AddScoped<AuthorizationService>();
 
 var app = builder.Build();
 
@@ -57,7 +59,7 @@ app.MapRazorPages();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<WellnessContext>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     await DataSeeder.SeedDataAsync(context, userManager);
 }
 

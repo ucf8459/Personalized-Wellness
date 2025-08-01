@@ -1,0 +1,321 @@
+@page "/admin"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using WellnessPlatform.Data
+@using WellnessPlatform.Models
+@using WellnessPlatform.Services
+@using Microsoft.AspNetCore.Authorization
+@inject UserManager<ApplicationUser> UserManager
+@inject WellnessContext Context
+@inject AuthorizationService AuthService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Admin Panel - Wellness Platform</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-shield-lock"></i> Admin Panel</h2>
+            <p class="text-muted">System administration and user management</p>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
+                        <i class="bi bi-people"></i> User Management
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab">
+                        <i class="bi bi-gear"></i> System Status
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
+                        <i class="bi bi-graph-up"></i> Analytics
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="adminTabContent">
+        <!-- User Management -->
+        <div class="tab-pane fade show active" id="users" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-people"></i> User Management</h5>
+                    <button class="btn btn-primary btn-sm" @onclick="ShowAddUserModal">
+                        <i class="bi bi-person-plus"></i> Add User
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Last Login</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in users)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@user.FullName</strong>
+                                            @if (!string.IsNullOrEmpty(user.Organization))
+                                            {
+                                                <div class="text-muted small">@user.Organization</div>
+                                            }
+                                        </td>
+                                        <td>@user.Email</td>
+                                        <td>
+                                            <span class="badge @GetRoleBadgeClass(user.Role)">
+                                                @user.RoleDisplayName
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge @(user.IsActive ? "bg-success" : "bg-danger")">
+                                                @(user.IsActive ? "Active" : "Inactive")
+                                            </span>
+                                        </td>
+                                        <td>@user.LastLogin.ToString("MMM dd, yyyy")</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-outline-primary" @onclick="() => EditUser(user)">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-warning" @onclick="() => ToggleUserStatus(user)">
+                                                    <i class="bi bi-toggle-on"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteUser(user)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="tab-pane fade" id="system" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-database"></i> Database Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h3 class="text-primary">@totalUsers</h3>
+                                        <p class="text-muted">Total Users</p>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h3 class="text-success">@activeUsers</h3>
+                                        <p class="text-muted">Active Users</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h3 class="text-info">@totalHealthProfiles</h3>
+                                        <p class="text-muted">Health Profiles</p>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h3 class="text-warning">@totalBiomarkers</h3>
+                                        <p class="text-muted">Biomarker Records</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-graph-up"></i> System Metrics</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">User Distribution by Role</label>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-primary" style="width: @(patientPercentage)%">
+                                        Patients (@patientCount)
+                                    </div>
+                                </div>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-success" style="width: @(providerPercentage)%">
+                                        Providers (@providerCount)
+                                    </div>
+                                </div>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-warning" style="width: @(adminPercentage)%">
+                                        Admins (@adminCount)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="tab-pane fade" id="analytics" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-graph-up"></i> System Analytics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Recent Activity</h6>
+                            <ul class="list-group">
+                                @foreach (var activity in recentActivity)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>@activity.UserName</strong>
+                                            <div class="text-muted small">@activity.Action</div>
+                                        </div>
+                                        <small class="text-muted">@activity.Timestamp.ToString("MMM dd, HH:mm")</small>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>System Health</h6>
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle"></i> All systems operational
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Database connection: Healthy
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Authentication: Active
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ApplicationUser> users = new();
+    private List<SystemActivity> recentActivity = new();
+    private int totalUsers = 0;
+    private int activeUsers = 0;
+    private int totalHealthProfiles = 0;
+    private int totalBiomarkers = 0;
+    private int patientCount = 0;
+    private int providerCount = 0;
+    private int adminCount = 0;
+    private double patientPercentage = 0;
+    private double providerPercentage = 0;
+    private double adminPercentage = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAdminData();
+    }
+
+    private async Task LoadAdminData()
+    {
+        // Load users
+        users = await UserManager.Users.ToListAsync();
+
+        // Calculate statistics
+        totalUsers = users.Count;
+        activeUsers = users.Count(u => u.IsActive);
+        patientCount = users.Count(u => u.Role == UserRole.Patient);
+        providerCount = users.Count(u => u.Role == UserRole.Provider);
+        adminCount = users.Count(u => u.Role == UserRole.Admin);
+
+        // Calculate percentages
+        if (totalUsers > 0)
+        {
+            patientPercentage = (double)patientCount / totalUsers * 100;
+            providerPercentage = (double)providerCount / totalUsers * 100;
+            adminPercentage = (double)adminCount / totalUsers * 100;
+        }
+
+        // Load system data
+        totalHealthProfiles = await Context.HealthProfiles.CountAsync();
+        totalBiomarkers = await Context.BiomarkerResults.CountAsync();
+
+        // Load recent activity (mock data for now)
+        recentActivity = new List<SystemActivity>
+        {
+            new SystemActivity { UserName = "John Doe", Action = "Added biomarker data", Timestamp = DateTime.UtcNow.AddHours(-1) },
+            new SystemActivity { UserName = "Dr. Smith", Action = "Updated treatment plan", Timestamp = DateTime.UtcNow.AddHours(-2) },
+            new SystemActivity { UserName = "Admin", Action = "Created new user account", Timestamp = DateTime.UtcNow.AddHours(-3) }
+        };
+    }
+
+    private string GetRoleBadgeClass(UserRole role) => role switch
+    {
+        UserRole.Patient => "bg-primary",
+        UserRole.Provider => "bg-success",
+        UserRole.Admin => "bg-warning",
+        _ => "bg-secondary"
+    };
+
+    private void ShowAddUserModal()
+    {
+        // Implementation for adding user modal
+        Console.WriteLine("Show add user modal");
+    }
+
+    private void EditUser(ApplicationUser user)
+    {
+        // Implementation for editing user
+        Console.WriteLine($"Edit user: {user.Email}");
+    }
+
+    private async Task ToggleUserStatus(ApplicationUser user)
+    {
+        user.IsActive = !user.IsActive;
+        await UserManager.UpdateAsync(user);
+        await LoadAdminData();
+        StateHasChanged();
+    }
+
+    private async Task DeleteUser(ApplicationUser user)
+    {
+        // Implementation for deleting user
+        Console.WriteLine($"Delete user: {user.Email}");
+    }
+
+    public class SystemActivity
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string Action { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
+    }
+} 

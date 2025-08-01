@@ -5,7 +5,7 @@ namespace WellnessPlatform.Data
 {
     public class DataSeeder
     {
-        public static async Task SeedDataAsync(WellnessContext context, UserManager<IdentityUser> userManager)
+        public static async Task SeedDataAsync(WellnessContext context, UserManager<ApplicationUser> userManager)
         {
             // Ensure database is created
             await context.Database.EnsureCreatedAsync();
@@ -15,11 +15,14 @@ namespace WellnessPlatform.Data
                 return;
             
             // Create a demo user
-            var demoUser = new IdentityUser
+            var demoUser = new ApplicationUser
             {
                 UserName = "demo@wellness.com",
                 Email = "demo@wellness.com",
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                FirstName = "Demo",
+                LastName = "User",
+                Role = UserRole.Patient
             };
             
             var result = await userManager.CreateAsync(demoUser, "Demo123!");
