@@ -1,0 +1,398 @@
+@page "/biomarkers"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Authorization
+@using WellnessPlatform.Data
+@using WellnessPlatform.Models
+@attribute [Authorize]
+@inject WellnessContext Context
+@inject UserManager<IdentityUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Biomarker Analysis</PageTitle>
+
+<div class="container-fluid">
+    @if (healthProfile?.BiomarkerResults.Any() == true)
+    {
+        <!-- Biomarker Overview -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4><i class="bi bi-activity"></i> Biomarker Overview</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h5 class="text-success">@biomarkersInOptimal</h5>
+                                    <small class="text-muted">In Optimal Range</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h5 class="text-warning">@biomarkersInNormal</h5>
+                                    <small class="text-muted">In Normal Range</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h5 class="text-danger">@biomarkersOutOfRange</h5>
+                                    <small class="text-muted">Out of Range</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h5>@totalBiomarkers</h5>
+                                    <small class="text-muted">Total Markers</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biomarker Categories -->
+        <div class="row">
+            @foreach (var category in biomarkerCategories)
+            {
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="@GetCategoryIcon(category.Key)"></i> @category.Key
+                            </h6>
+                            <span class="badge @GetCategoryBadgeClass(category.Value)">@category.Value.Count() markers</span>
+                        </div>
+                        <div class="card-body">
+                            @foreach (var biomarkerGroup in category.Value)
+                            {
+                                var latest = biomarkerGroup.OrderByDescending(b => b.TestDate).First();
+                                <div class="row align-items-center mb-3">
+                                    <div class="col-md-4">
+                                        <strong>@latest.BiomarkerName</strong>
+                                        <div class="text-muted small">@latest.Units</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <span class="h6 @latest.StatusColor">@latest.Value</span>
+                                        <div class="text-muted small">
+                                            @if (latest.OptimalRangeMin.HasValue && latest.OptimalRangeMax.HasValue)
+                                            {
+                                                <span>Optimal: @latest.OptimalRangeMin-@latest.OptimalRangeMax</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="badge @GetStatusBadgeClass(latest.Status)">
+                                            @latest.Status
+                                        </span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        @{
+                                            var trend = GetTrend(biomarkerGroup);
+                                        }
+                                        <span class="@GetTrendClass(trend)">
+                                            <i class="bi @GetTrendIcon(trend)"></i> @trend
+                                        </span>
+                                        <div class="text-muted small">Last: @latest.TestDate.ToString("MMM dd")</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Chart Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-graph-up"></i> Biomarker Trends</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="biomarkerChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Analysis -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-table"></i> Detailed Biomarker History</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Biomarker</th>
+                                        <th>Date</th>
+                                        <th>Value</th>
+                                        <th>Reference Range</th>
+                                        <th>Optimal Range</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var result in healthProfile.BiomarkerResults.OrderByDescending(b => b.TestDate).ThenBy(b => b.BiomarkerName))
+                                    {
+                                        <tr>
+                                            <td><strong>@result.BiomarkerName</strong></td>
+                                            <td>@result.TestDate.ToString("MMM dd, yyyy")</td>
+                                            <td class="@result.StatusColor">
+                                                @result.Value @result.Units
+                                            </td>
+                                            <td class="text-muted">
+                                                @if (result.ReferenceRangeMin.HasValue && result.ReferenceRangeMax.HasValue)
+                                                {
+                                                    <span>@result.ReferenceRangeMin - @result.ReferenceRangeMax</span>
+                                                }
+                                            </td>
+                                            <td class="text-success">
+                                                @if (result.OptimalRangeMin.HasValue && result.OptimalRangeMax.HasValue)
+                                                {
+                                                    <span>@result.OptimalRangeMin - @result.OptimalRangeMax</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetStatusBadgeClass(result.Status)">
+                                                    @result.Status
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-graph-up display-1 text-muted"></i>
+            <h3 class="mt-3">No Biomarker Data</h3>
+            <p class="text-muted">Upload your latest lab results to get started with biomarker tracking.</p>
+            <button class="btn btn-primary">
+                <i class="bi bi-upload"></i> Upload Lab Results
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private HealthProfile? healthProfile;
+    private Dictionary<string, IGrouping<string, BiomarkerResult>> biomarkerData = new();
+    private Dictionary<string, List<IGrouping<string, BiomarkerResult>>> biomarkerCategories = new();
+    private int biomarkersInOptimal = 0;
+    private int biomarkersInNormal = 0;
+    private int biomarkersOutOfRange = 0;
+    private int totalBiomarkers = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBiomarkerData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && biomarkerData.Any())
+        {
+            await RenderChart();
+        }
+    }
+
+    private async Task LoadBiomarkerData()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var identityUser = await UserManager.GetUserAsync(user);
+            if (identityUser != null)
+            {
+                healthProfile = await Context.HealthProfiles
+                    .Include(h => h.BiomarkerResults)
+                    .FirstOrDefaultAsync(h => h.UserId == identityUser.Id);
+
+                if (healthProfile?.BiomarkerResults.Any() == true)
+                {
+                    biomarkerData = healthProfile.BiomarkerResults
+                        .GroupBy(b => b.BiomarkerName)
+                        .ToDictionary(g => g.Key, g => g);
+
+                    CalculateBiomarkerStats();
+                    CategorizeBiomarkers();
+                }
+            }
+        }
+    }
+
+    private void CalculateBiomarkerStats()
+    {
+        var latestBiomarkers = biomarkerData.Values
+            .Select(g => g.OrderByDescending(b => b.TestDate).First())
+            .ToList();
+
+        biomarkersInOptimal = latestBiomarkers.Count(b => b.Status == BiomarkerStatus.Optimal);
+        biomarkersInNormal = latestBiomarkers.Count(b => b.Status == BiomarkerStatus.Normal);
+        biomarkersOutOfRange = latestBiomarkers.Count(b => b.Status == BiomarkerStatus.High || b.Status == BiomarkerStatus.Low);
+        totalBiomarkers = latestBiomarkers.Count;
+    }
+
+    private void CategorizeBiomarkers()
+    {
+        var categories = new Dictionary<string, List<string>>
+        {
+            { "Cardiovascular", new List<string> { "Total Cholesterol", "LDL Cholesterol", "HDL Cholesterol", "Triglycerides", "C-Reactive Protein" } },
+            { "Metabolic", new List<string> { "HbA1c", "Fasting Glucose", "Insulin", "HOMA-IR" } },
+            { "Hormonal", new List<string> { "TSH", "Free T3", "Free T4", "Testosterone", "Estradiol", "Cortisol" } },
+            { "Vitamins & Minerals", new List<string> { "Vitamin D", "Vitamin B12", "Folate", "Iron", "Ferritin", "Magnesium" } },
+            { "Inflammatory", new List<string> { "C-Reactive Protein", "ESR", "IL-6" } }
+        };
+
+        biomarkerCategories = categories.ToDictionary(
+            kvp => kvp.Key,
+            kvp => biomarkerData.Where(bd => kvp.Value.Contains(bd.Key)).Select(bd => bd.Value).ToList()
+        ).Where(kvp => kvp.Value.Any()).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    }
+
+    private async Task RenderChart()
+    {
+        try
+        {
+            var chartData = PrepareChartData();
+            await JSRuntime.InvokeVoidAsync("renderBiomarkerChart", chartData);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error rendering chart: {ex.Message}");
+        }
+    }
+
+    private object PrepareChartData()
+    {
+        var keyBiomarkers = new[] { "Vitamin D", "C-Reactive Protein", "Total Cholesterol", "HbA1c" };
+        var datasets = new List<object>();
+
+        foreach (var biomarker in keyBiomarkers)
+        {
+            if (biomarkerData.ContainsKey(biomarker))
+            {
+                var data = biomarkerData[biomarker]
+                    .OrderBy(b => b.TestDate)
+                    .Select(b => new { x = b.TestDate.ToString("yyyy-MM-dd"), y = b.Value })
+                    .ToArray();
+
+                datasets.Add(new
+                {
+                    label = biomarker,
+                    data = data,
+                    borderColor = GetChartColor(biomarker),
+                    backgroundColor = GetChartColor(biomarker, 0.1),
+                    tension = 0.4
+                });
+            }
+        }
+
+        return new
+        {
+            type = "line",
+            data = new { datasets = datasets },
+            options = new
+            {
+                responsive = true,
+                scales = new
+                {
+                    x = new { type = "time", time = new { unit = "month" } },
+                    y = new { beginAtZero = false }
+                },
+                plugins = new
+                {
+                    title = new { display = true, text = "Key Biomarker Trends" },
+                    legend = new { display = true }
+                }
+            }
+        };
+    }
+
+    private string GetChartColor(string biomarker, double alpha = 1.0)
+    {
+        var colors = new Dictionary<string, string>
+        {
+            { "Vitamin D", alpha == 1.0 ? "rgb(255, 99, 132)" : $"rgba(255, 99, 132, {alpha})" },
+            { "C-Reactive Protein", alpha == 1.0 ? "rgb(54, 162, 235)" : $"rgba(54, 162, 235, {alpha})" },
+            { "Total Cholesterol", alpha == 1.0 ? "rgb(255, 205, 86)" : $"rgba(255, 205, 86, {alpha})" },
+            { "HbA1c", alpha == 1.0 ? "rgb(75, 192, 192)" : $"rgba(75, 192, 192, {alpha})" }
+        };
+        
+        return colors.GetValueOrDefault(biomarker, alpha == 1.0 ? "rgb(153, 102, 255)" : $"rgba(153, 102, 255, {alpha})");
+    }
+
+    private string GetCategoryIcon(string category) => category switch
+    {
+        "Cardiovascular" => "bi bi-heart-pulse",
+        "Metabolic" => "bi bi-speedometer2",
+        "Hormonal" => "bi bi-graph-up-arrow",
+        "Vitamins & Minerals" => "bi bi-capsule",
+        "Inflammatory" => "bi bi-thermometer-half",
+        _ => "bi bi-activity"
+    };
+
+    private string GetCategoryBadgeClass(List<IGrouping<string, BiomarkerResult>> markers)
+    {
+        var count = markers.Count;
+        return count switch
+        {
+            >= 5 => "bg-success",
+            >= 3 => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetStatusBadgeClass(BiomarkerStatus status) => status switch
+    {
+        BiomarkerStatus.Optimal => "bg-success",
+        BiomarkerStatus.Normal => "bg-warning",
+        BiomarkerStatus.High or BiomarkerStatus.Low => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    private string GetTrend(IGrouping<string, BiomarkerResult> biomarkerGroup)
+    {
+        var orderedResults = biomarkerGroup.OrderBy(b => b.TestDate).ToList();
+        if (orderedResults.Count < 2) return "Stable";
+
+        var latest = orderedResults.Last().Value;
+        var previous = orderedResults[orderedResults.Count - 2].Value;
+        var percentChange = ((latest - previous) / previous) * 100;
+
+        return Math.Abs(percentChange) < 5 ? "Stable" : percentChange > 0 ? "Improving" : "Declining";
+    }
+
+    private string GetTrendClass(string trend) => trend switch
+    {
+        "Improving" => "text-success",
+        "Declining" => "text-danger",
+        _ => "text-muted"
+    };
+
+    private string GetTrendIcon(string trend) => trend switch
+    {
+        "Improving" => "bi-arrow-up",
+        "Declining" => "bi-arrow-down",
+        _ => "bi-dash"
+    };
+}

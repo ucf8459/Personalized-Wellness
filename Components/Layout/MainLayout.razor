@@ -1,0 +1,48 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4 d-flex justify-content-between align-items-center">
+            <div>
+                <a href="https://github.com/yourusername/wellness-platform" target="_blank" class="text-decoration-none">
+                    <i class="bi bi-github"></i> View on GitHub
+                </a>
+            </div>
+            <div>
+                <CascadingAuthenticationState>
+                    <AuthorizeView>
+                        <Authorized>
+                            <span class="me-3">Hello, @context.User.Identity?.Name!</span>
+                            <a href="/Account/Logout" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </Authorized>
+                        <NotAuthorized>
+                            <a href="/Account/Login" class="btn btn-sm btn-primary me-2">
+                                <i class="bi bi-box-arrow-in-right"></i> Login
+                            </a>
+                            <a href="/Account/Register" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-person-plus"></i> Register
+                            </a>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </CascadingAuthenticationState>
+            </div>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

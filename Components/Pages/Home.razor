@@ -1,0 +1,49 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>Wellness Platform</PageTitle>
+
+<div class="hero-section text-center py-5">
+    <div class="container">
+        <h1 class="display-4 text-primary">
+            <i class="bi bi-heart-pulse"></i> 
+            Comprehensive Wellness Platform
+        </h1>
+        <p class="lead">
+            Evidence-based personalized health optimization through biomarker tracking, validated assessments, and treatment recommendations.
+        </p>
+        <div class="row mt-5">
+            <div class="col-md-4">
+                <div class="card h-100 border-primary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-activity display-4 text-primary"></i>
+                        <h5 class="card-title mt-3">Biomarker Tracking</h5>
+                        <p class="card-text">Monitor key health indicators with trend analysis and optimal range guidance.</p>
+                        <a href="/dashboard" class="btn btn-primary">View Dashboard</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center">
+                        <i class="bi bi-clipboard-check display-4 text-success"></i>
+                        <h5 class="card-title mt-3">PROMIS Assessments</h5>
+                        <p class="card-text">Validated health assessments with population-normalized scoring.</p>
+                        <a href="/dashboard" class="btn btn-success">Take Assessment</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-warning">
+                    <div class="card-body text-center">
+                        <i class="bi bi-lightbulb display-4 text-warning"></i>
+                        <h5 class="card-title mt-3">Evidence-Based Recommendations</h5>
+                        <p class="card-text">Personalized treatment options with evidence levels and safety ratings.</p>
+                        <a href="/dashboard" class="btn btn-warning">View Recommendations</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,450 @@
+@page "/dashboard"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Authorization
+@using WellnessPlatform.Data
+@using WellnessPlatform.Models
+@attribute [Authorize]
+@inject WellnessContext Context
+@inject UserManager<IdentityUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+
+<PageTitle>Wellness Dashboard</PageTitle>
+
+<div class="container-fluid">
+    @if (healthProfile != null)
+    {
+        <!-- Health Status Overview Panel -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-heart-pulse"></i> Health Status Overview
+                            <small class="float-end">Last Updated: @healthProfile.LastUpdated.ToString("MMM dd, yyyy")</small>
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="badge bg-success fs-5 me-3">@healthScore</div>
+                                    <div>
+                                        <h5 class="mb-0">Health Score</h5>
+                                        <small class="text-success">
+                                            <i class="bi bi-arrow-up"></i> +@healthTrend pts
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6>Biomarkers</h6>
+                                    <span class="text-success">@biomarkersInOptimal/@totalBiomarkers in optimal range (@optimalPercentage%)</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6>PROMIS Scores</h6>
+                                    <span class="text-info">Physical Function T-Score: @latestPhysicalFunction</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6>Active Treatments</h6>
+                                    <span class="text-primary">@activeTreatments interventions</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button class="btn btn-outline-primary me-2">
+                                    <i class="bi bi-file-medical"></i> View Detailed Analysis
+                                </button>
+                                <button class="btn btn-outline-secondary me-2">
+                                    <i class="bi bi-calendar-plus"></i> Schedule Next Tests
+                                </button>
+                                <button class="btn btn-outline-info">
+                                    <i class="bi bi-bullseye"></i> Update Goals
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="row">
+            <!-- Left Column: Current Status -->
+            <div class="col-lg-4">
+                <!-- Biomarker Status Widget -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-activity"></i> Biomarker Status</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var category in biomarkerCategories)
+                        {
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>@category.Key</span>
+                                <span class="badge @GetStatusBadgeClass(category.Value)">
+                                    @category.Value
+                                </span>
+                            </div>
+                        }
+                        <button class="btn btn-sm btn-outline-primary mt-2 w-100">
+                            <i class="bi bi-chevron-down"></i> View Details
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PROMIS Assessment Summary -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-clipboard-check"></i> PROMIS Assessment Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var promis in latestPromisResults)
+                        {
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">@promis.Domain</span>
+                                    <span class="badge bg-info">T-Score: @promis.TScore.ToString("F1")</span>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar @GetPromisProgressColor(promis.TScore)" 
+                                         style="width: @GetPromisProgressWidth(promis.TScore)%"></div>
+                                </div>
+                                <small class="text-muted">@promis.PercentileRank percentile</small>
+                            </div>
+                        }
+                        <button class="btn btn-sm btn-primary w-100 mt-2">
+                            <i class="bi bi-plus"></i> Take New Assessment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Column: Personalized Recommendations -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-lightbulb"></i> Personalized Recommendations</h5>
+                        <small class="text-muted">Based on your latest results</small>
+                    </div>
+                    <div class="card-body">
+                        <!-- High Priority Recommendations -->
+                        <div class="mb-4">
+                            <h6 class="text-warning">🥇 HIGH PRIORITY</h6>
+                            @foreach (var treatment in highPriorityTreatments)
+                            {
+                                <div class="border-start border-warning border-3 ps-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>@treatment.Name</strong>
+                                            <span class="badge @GetEvidenceBadgeClass(treatment.EvidenceLevel) ms-2">
+                                                @treatment.EvidenceBadge
+                                            </span>
+                                            <div class="mt-1">
+                                                <small class="text-success">
+                                                    <i class="bi bi-shield-check"></i> Safety: @treatment.SafetyRating/5
+                                                </small>
+                                            </div>
+                                            <div class="mt-1">
+                                                <small class="text-muted">@treatment.Mechanism</small>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(treatment.CostRange))
+                                            {
+                                                <div class="mt-1">
+                                                    <small class="text-primary">💰 @treatment.CostRange</small>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Moderate Priority -->
+                        <div class="mb-4">
+                            <h6 class="text-info">🥈 MODERATE PRIORITY</h6>
+                            @foreach (var treatment in moderatePriorityTreatments)
+                            {
+                                <div class="border-start border-info border-3 ps-3 mb-3">
+                                    <strong>@treatment.Name</strong>
+                                    <span class="badge @GetEvidenceBadgeClass(treatment.EvidenceLevel) ms-2">
+                                        @treatment.EvidenceBadge
+                                    </span>
+                                    <div class="mt-1">
+                                        <small class="text-muted">@treatment.Mechanism</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Experimental Options -->
+                        <div class="mb-3">
+                            <h6 class="text-secondary">🧪 EXPERIMENTAL OPTIONS</h6>
+                            @foreach (var treatment in experimentalTreatments)
+                            {
+                                <div class="border-start border-secondary border-3 ps-3 mb-3">
+                                    <strong>@treatment.Name</strong>
+                                    <span class="badge bg-secondary ms-2">@treatment.EvidenceBadge</span>
+                                    <div class="mt-1">
+                                        <small class="text-warning">
+                                            <i class="bi bi-exclamation-triangle"></i> Safety: @treatment.SafetyRating/5
+                                        </small>
+                                    </div>
+                                    <div class="mt-1">
+                                        <small class="text-muted">Limited human data, requires physician consultation</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3">
+                            <button class="btn btn-sm btn-outline-primary flex-fill">View All</button>
+                            <button class="btn btn-sm btn-outline-secondary flex-fill">Customize</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Tracking and Progress -->
+            <div class="col-lg-4">
+                <!-- Treatment Timeline -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-clock-history"></i> Treatment Timeline</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var userTreatment in activeUserTreatments)
+                        {
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <strong>@userTreatment.Treatment.Name</strong>
+                                    <div class="text-muted small">
+                                        Started: @userTreatment.StartDate.ToString("MMM yyyy")
+                                    </div>
+                                    @if (userTreatment.ResponseRating.HasValue)
+                                    {
+                                        <div class="mt-1">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="bi @(i <= userTreatment.ResponseRating ? "bi-star-fill text-warning" : "bi-star text-muted")"></i>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                        }
+                        <button class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-plus"></i> Add Treatment
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Upcoming Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-calendar-event"></i> Upcoming Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <strong>Vitamin D Test</strong>
+                                    <div class="text-muted small">Due in 2 weeks</div>
+                                </div>
+                                <span class="badge bg-warning rounded-pill">Due Soon</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <strong>PROMIS Assessment</strong>
+                                    <div class="text-muted small">Quarterly check-in</div>
+                                </div>
+                                <span class="badge bg-info rounded-pill">Available</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <strong>Provider Consultation</strong>
+                                    <div class="text-muted small">Longevity specialist</div>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">Scheduled</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading your health dashboard...</p>
+        </div>
+    }
+</div>
+
+@code {
+    private HealthProfile? healthProfile;
+    private int healthScore = 82;
+    private int healthTrend = 3;
+    private int biomarkersInOptimal = 34;
+    private int totalBiomarkers = 40;
+    private int optimalPercentage => (biomarkersInOptimal * 100) / totalBiomarkers;
+    private decimal latestPhysicalFunction = 55.2m;
+    private int activeTreatments = 8;
+    
+    private Dictionary<string, string> biomarkerCategories = new();
+    private List<PromisResult> latestPromisResults = new();
+    private List<Treatment> highPriorityTreatments = new();
+    private List<Treatment> moderatePriorityTreatments = new();
+    private List<Treatment> experimentalTreatments = new();
+    private List<UserTreatment> activeUserTreatments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHealthData();
+    }
+
+    private async Task LoadHealthData()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var identityUser = await UserManager.GetUserAsync(user);
+            if (identityUser != null)
+            {
+                healthProfile = await Context.HealthProfiles
+                    .Include(h => h.BiomarkerResults)
+                    .Include(h => h.PromisResults)
+                    .Include(h => h.Treatments)
+                        .ThenInclude(ut => ut.Treatment)
+                    .FirstOrDefaultAsync(h => h.UserId == identityUser.Id);
+
+                if (healthProfile != null)
+                {
+                    LoadBiomarkerCategories();
+                    LoadLatestPromisResults();
+                    LoadTreatmentRecommendations();
+                    LoadActiveUserTreatments();
+                }
+            }
+        }
+    }
+
+    private void LoadBiomarkerCategories()
+    {
+        if (healthProfile?.BiomarkerResults.Any() == true)
+        {
+            biomarkerCategories = new Dictionary<string, string>
+            {
+                { "Cardiovascular", GetCategoryStatus("cardiovascular") },
+                { "Metabolic", GetCategoryStatus("metabolic") },
+                { "Inflammation", GetCategoryStatus("inflammation") },
+                { "Hormones", GetCategoryStatus("hormonal") },
+                { "Vitamins", GetCategoryStatus("vitamins") }
+            };
+        }
+    }
+
+    private string GetCategoryStatus(string category)
+    {
+        var categoryMarkers = category.ToLower() switch
+        {
+            "cardiovascular" => new[] { "Total Cholesterol", "LDL Cholesterol", "C-Reactive Protein" },
+            "metabolic" => new[] { "HbA1c", "Fasting Glucose" },
+            "inflammation" => new[] { "C-Reactive Protein" },
+            "hormonal" => new[] { "TSH" },
+            "vitamins" => new[] { "Vitamin D" },
+            _ => Array.Empty<string>()
+        };
+
+        var categoryResults = healthProfile?.BiomarkerResults
+            .Where(b => categoryMarkers.Contains(b.BiomarkerName))
+            .OrderByDescending(b => b.TestDate)
+            .Take(categoryMarkers.Length)
+            .ToList() ?? new List<BiomarkerResult>();
+
+        var optimalCount = categoryResults.Count(r => r.Status == BiomarkerStatus.Optimal);
+        var totalCount = categoryResults.Count;
+
+        if (totalCount == 0) return "No Data";
+        
+        var percentage = (optimalCount * 100) / totalCount;
+        return percentage >= 80 ? "Optimal" : percentage >= 60 ? "Good" : "Needs Attention";
+    }
+
+    private void LoadLatestPromisResults()
+    {
+        latestPromisResults = healthProfile?.PromisResults
+            .GroupBy(p => p.Domain)
+            .Select(g => g.OrderByDescending(p => p.AssessmentDate).First())
+            .OrderBy(p => p.Domain)
+            .ToList() ?? new List<PromisResult>();
+    }
+
+    private void LoadTreatmentRecommendations()
+    {
+        var allTreatments = Context.Treatments.ToList();
+        
+        highPriorityTreatments = allTreatments
+            .Where(t => t.EvidenceLevel <= EvidenceLevel.RandomizedTrials && t.SafetyRating >= 4)
+            .Take(3)
+            .ToList();
+            
+        moderatePriorityTreatments = allTreatments
+            .Where(t => t.EvidenceLevel == EvidenceLevel.CohortStudies && t.SafetyRating >= 3)
+            .Take(2)
+            .ToList();
+            
+        experimentalTreatments = allTreatments
+            .Where(t => t.EvidenceLevel >= EvidenceLevel.CaseReports && t.SafetyRating <= 3)
+            .Take(2)
+            .ToList();
+    }
+
+    private void LoadActiveUserTreatments()
+    {
+        activeUserTreatments = healthProfile?.Treatments
+            .Where(ut => ut.EndDate == null)
+            .OrderByDescending(ut => ut.StartDate)
+            .ToList() ?? new List<UserTreatment>();
+    }
+
+    private string GetStatusBadgeClass(string status) => status switch
+    {
+        "Optimal" => "bg-success",
+        "Good" => "bg-warning",
+        "Needs Attention" => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    private string GetEvidenceBadgeClass(EvidenceLevel level) => level switch
+    {
+        EvidenceLevel.SystematicReviews => "bg-warning text-dark",
+        EvidenceLevel.RandomizedTrials => "bg-info",
+        EvidenceLevel.CohortStudies => "bg-secondary",
+        _ => "bg-dark"
+    };
+
+    private string GetPromisProgressColor(decimal tScore) => tScore switch
+    {
+        >= 55 => "bg-success",
+        >= 45 => "bg-warning",
+        _ => "bg-danger"
+    };
+
+    private double GetPromisProgressWidth(decimal tScore) => Math.Max(10, Math.Min(100, (double)((tScore - 30) * 100 / 40)));
+}
