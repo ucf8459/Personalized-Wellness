@@ -1,0 +1,400 @@
+@page "/correlations"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using WellnessPlatform.Models
+@using WellnessPlatform.Services
+@using Microsoft.AspNetCore.Authorization
+@inject UserManager<ApplicationUser> UserManager
+@inject CorrelationAnalysisService CorrelationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+
+<PageTitle>Interactive Correlations - Wellness Platform</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-graph-up-arrow"></i> Interactive Correlation Analysis</h2>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm" @onclick="RefreshData">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" @onclick="ShowAll">
+                        <i class="bi bi-eye"></i> All
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" @onclick="ShowStrong">
+                        <i class="bi bi-exclamation-triangle"></i> Strong
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="correlationTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="biomarker-tab" data-bs-toggle="tab" data-bs-target="#biomarker" type="button" role="tab">
+                        <i class="bi bi-activity"></i> Biomarker Correlations
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="treatment-tab" data-bs-toggle="tab" data-bs-target="#treatment" type="button" role="tab">
+                        <i class="bi bi-capsule"></i> Treatment Effectiveness
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="trends-tab" data-bs-toggle="tab" data-bs-target="#trends" type="button" role="tab">
+                        <i class="bi bi-graph-up"></i> Health Trends
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="correlationTabContent">
+        <!-- Biomarker Correlations -->
+        <div class="tab-pane fade show active" id="biomarker" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-activity"></i> Biomarker Correlations</h5>
+                    <p class="text-muted mb-0">Discover relationships between different biomarkers in your health data</p>
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Analyzing biomarker correlations...</p>
+                        </div>
+                    }
+                    else if (biomarkerCorrelations.Any())
+                    {
+                        <div class="row">
+                            @foreach (var correlation in filteredBiomarkerCorrelations)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card border-@correlation.CorrelationColor h-100">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">@correlation.Biomarker1 ↔ @correlation.Biomarker2</h6>
+                                            <span class="badge bg-@correlation.CorrelationColor">
+                                                @correlation.CorrelationStrength
+                                            </span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span>Correlation Coefficient:</span>
+                                                    <strong class="text-@correlation.CorrelationColor">
+                                                        @correlation.CorrelationCoefficient.ToString("F3")
+                                                    </strong>
+                                                </div>
+                                                <div class="progress mb-2">
+                                                    <div class="progress-bar bg-@correlation.CorrelationColor" 
+                                                         style="width: @(Math.Abs(correlation.CorrelationCoefficient) * 100)%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row text-center">
+                                                <div class="col-6">
+                                                    <div class="border-end">
+                                                        <div class="text-muted small">Trend</div>
+                                                        <div class="fw-bold text-@(correlation.Trend == "Positive" ? "success" : "danger")">
+                                                            @correlation.Trend
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="text-muted small">Data Points</div>
+                                                    <div class="fw-bold">@correlation.DataPoints</div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-info-circle"></i>
+                                                    @GetCorrelationInsight(correlation)
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>No biomarker correlations available</strong>
+                                <div class="mt-2">Add more biomarker data to discover correlations.</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Treatment Effectiveness -->
+        <div class="tab-pane fade" id="treatment" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-capsule"></i> Treatment Effectiveness Analysis</h5>
+                    <p class="text-muted mb-0">Track how treatments impact your biomarkers and PROMIS scores</p>
+                </div>
+                <div class="card-body">
+                    @if (treatmentEffectiveness.Any())
+                    {
+                        <div class="row">
+                            @foreach (var treatment in treatmentEffectiveness)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card border-@treatment.EffectivenessColor h-100">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">@treatment.TreatmentName</h6>
+                                            <span class="badge bg-@treatment.EffectivenessColor">
+                                                @treatment.EffectivenessLevel
+                                            </span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span>Effectiveness Score:</span>
+                                                    <strong class="text-@treatment.EffectivenessColor">
+                                                        @treatment.EffectivenessScore.ToString("F0")%
+                                                    </strong>
+                                                </div>
+                                                <div class="progress mb-2">
+                                                    <div class="progress-bar bg-@treatment.EffectivenessColor" 
+                                                         style="width: @treatment.EffectivenessScore%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row text-center mb-3">
+                                                <div class="col-6">
+                                                    <div class="border-end">
+                                                        <div class="text-muted small">Category</div>
+                                                        <div class="fw-bold">@treatment.TreatmentCategory</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="text-muted small">Started</div>
+                                                    <div class="fw-bold">@treatment.StartDate.ToString("MMM yyyy")</div>
+                                                </div>
+                                            </div>
+                                            @if (treatment.BiomarkerChanges.Any())
+                                            {
+                                                <div class="mb-3">
+                                                    <h6 class="text-muted">Biomarker Changes</h6>
+                                                    @foreach (var change in treatment.BiomarkerChanges.Take(3))
+                                                    {
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <small>@change.BiomarkerName</small>
+                                                            <span class="badge bg-@change.ChangeColor">
+                                                                @change.ChangePercentage.ToString("F1")%
+                                                            </span>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            @if (treatment.ResponseRating.HasValue)
+                                            {
+                                                <div class="text-center">
+                                                    <div class="text-muted small">Your Rating</div>
+                                                    <div>
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            <i class="bi @(i <= treatment.ResponseRating ? "bi-star-fill text-warning" : "bi-star text-muted")"></i>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>No treatment effectiveness data available</strong>
+                                <div class="mt-2">Start treatments to see effectiveness analysis.</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Trends -->
+        <div class="tab-pane fade" id="trends" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-graph-up"></i> Health Trends Analysis</h5>
+                    <p class="text-muted mb-0">Track trends in your biomarkers, PROMIS scores, and lifestyle metrics</p>
+                </div>
+                <div class="card-body">
+                    @if (healthTrends.Any())
+                    {
+                        <div class="row">
+                            @foreach (var trend in healthTrends)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card border-@trend.TrendColor h-100">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">@trend.MetricName</h6>
+                                            <span class="badge bg-@trend.TrendColor">
+                                                @trend.Significance
+                                            </span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span>Trend Direction:</span>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi @trend.TrendIcon text-@trend.TrendColor me-1"></i>
+                                                        <strong class="text-@trend.TrendColor">@trend.TrendDirection</strong>
+                                                    </div>
+                                                </div>
+                                                <div class="progress mb-2">
+                                                    <div class="progress-bar bg-@trend.TrendColor" 
+                                                         style="width: @(Math.Min(trend.TrendStrength * 100, 100))%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row text-center">
+                                                <div class="col-6">
+                                                    <div class="border-end">
+                                                        <div class="text-muted small">Type</div>
+                                                        <div class="fw-bold">@trend.MetricType</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="text-muted small">Data Points</div>
+                                                    <div class="fw-bold">@trend.DataPoints</div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <div class="text-center">
+                                                    <div class="text-muted small">Current Value</div>
+                                                    <div class="h5 mb-0">
+                                                        @trend.LastValue.ToString("F1")
+                                                        @if (!string.IsNullOrEmpty(trend.Units))
+                                                        {
+                                                            <small class="text-muted">@trend.Units</small>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>No health trends available</strong>
+                                <div class="mt-2">Add more health data to see trend analysis.</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<BiomarkerCorrelation> biomarkerCorrelations = new();
+    private List<BiomarkerCorrelation> filteredBiomarkerCorrelations = new();
+    private List<TreatmentEffectiveness> treatmentEffectiveness = new();
+    private List<HealthTrend> healthTrends = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCorrelationData();
+    }
+
+    private async Task LoadCorrelationData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    biomarkerCorrelations = await CorrelationService.GetBiomarkerCorrelationsAsync(userId);
+                    filteredBiomarkerCorrelations = biomarkerCorrelations;
+                    treatmentEffectiveness = await CorrelationService.GetTreatmentEffectivenessAsync(userId);
+                    healthTrends = await CorrelationService.GetHealthTrendsAsync(userId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading correlation data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadCorrelationData();
+    }
+
+    private void ShowAll()
+    {
+        filteredBiomarkerCorrelations = biomarkerCorrelations;
+        StateHasChanged();
+    }
+
+    private void ShowStrong()
+    {
+        filteredBiomarkerCorrelations = biomarkerCorrelations
+            .Where(c => Math.Abs(c.CorrelationCoefficient) > 0.7)
+            .ToList();
+        StateHasChanged();
+    }
+
+    private string GetCorrelationInsight(BiomarkerCorrelation correlation)
+    {
+        if (Math.Abs(correlation.CorrelationCoefficient) > 0.7)
+        {
+            return correlation.Trend == "Positive" 
+                ? "Strong positive correlation - these biomarkers tend to move together"
+                : "Strong negative correlation - these biomarkers tend to move in opposite directions";
+        }
+        else if (Math.Abs(correlation.CorrelationCoefficient) > 0.4)
+        {
+            return "Moderate correlation - some relationship between these biomarkers";
+        }
+        else
+        {
+            return "Weak correlation - minimal relationship between these biomarkers";
+        }
+    }
+} 

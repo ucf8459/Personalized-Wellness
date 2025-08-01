@@ -5,6 +5,7 @@
 @using WellnessPlatform.Services
 @using Microsoft.AspNetCore.Authorization
 @using WellnessPlatform.Components
+
 @inject UserManager<ApplicationUser> UserManager
 @inject BiomarkerStatusService StatusService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -159,7 +160,28 @@
                             @foreach (var indicator in filteredIndicators)
                             {
                                 <div class="col-md-6 col-lg-4 col-xl-3 mb-3">
-                                    <BiomarkerStatusCard indicator="indicator" />
+                                    <div class="card border-@indicator.StatusColor h-100">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">@indicator.BiomarkerName</h6>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="bi @indicator.AlertIcon" title="@indicator.AlertLevel"></i>
+                                                <i class="bi @indicator.TrendIcon" title="Trend: @indicator.Trend"></i>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="h5 mb-0 me-2">@indicator.CurrentValue</span>
+                                                <small class="text-muted">@indicator.Units</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <span class="badge bg-@indicator.StatusColor">@indicator.Status</span>
+                                                @if (indicator.Severity > 0)
+                                                {
+                                                    <span class="badge bg-secondary ms-1">Severity: @indicator.Severity</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             }
                         </div>
@@ -181,8 +203,8 @@
 </div>
 
 @code {
-    private List<BiomarkerStatusIndicator> allIndicators = new();
-    private List<BiomarkerStatusIndicator> filteredIndicators = new();
+    private List<WellnessPlatform.Services.BiomarkerStatusIndicator> allIndicators = new();
+    private List<WellnessPlatform.Services.BiomarkerStatusIndicator> filteredIndicators = new();
     private BiomarkerSummary? summary;
     private bool isLoading = true;
     private Timer? refreshTimer;

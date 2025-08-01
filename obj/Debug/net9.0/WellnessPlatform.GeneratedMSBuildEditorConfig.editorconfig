@@ -36,8 +36,8 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9CaW9tYXJrZXJBbGVydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/seanlaneve/Personalized Wellness/WellnessPlatform/Components/BiomarkerStatusCard.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9CaW9tYXJrZXJTdGF0dXNDYXJkLnJhem9y
+[/Users/seanlaneve/Personalized Wellness/WellnessPlatform/Components/BiomarkerStatusIndicator.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9CaW9tYXJrZXJTdGF0dXNJbmRpY2F0b3IucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/seanlaneve/Personalized Wellness/WellnessPlatform/Components/Pages/Admin.razor]
@@ -46,6 +46,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/Users/seanlaneve/Personalized Wellness/WellnessPlatform/Components/Pages/Biomarkers.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9CaW9tYXJrZXJzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/seanlaneve/Personalized Wellness/WellnessPlatform/Components/Pages/Correlations.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Db3JyZWxhdGlvbnMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/seanlaneve/Personalized Wellness/WellnessPlatform/Components/Pages/Counter.razor]

@@ -55,9 +55,9 @@
 
 @code {
     [Parameter]
-    public BiomarkerStatusIndicator? indicator { get; set; }
+    public WellnessPlatform.Services.BiomarkerStatusIndicator? indicator { get; set; }
 
-    private string GetAlertMessage(BiomarkerStatusIndicator indicator)
+    private string GetAlertMessage(WellnessPlatform.Services.BiomarkerStatusIndicator indicator)
     {
         return indicator.AlertLevel switch
         {
