@@ -296,13 +296,13 @@
 
 @code {
     private HealthProfile? healthProfile;
-    private int healthScore = 82;
-    private int healthTrend = 3;
-    private int biomarkersInOptimal = 34;
-    private int totalBiomarkers = 40;
-    private int optimalPercentage => (biomarkersInOptimal * 100) / totalBiomarkers;
-    private decimal latestPhysicalFunction = 55.2m;
-    private int activeTreatments = 8;
+    private int healthScore = 0;
+    private int healthTrend = 0;
+    private int biomarkersInOptimal = 0;
+    private int totalBiomarkers = 0;
+    private int optimalPercentage => totalBiomarkers > 0 ? (biomarkersInOptimal * 100) / totalBiomarkers : 0;
+    private decimal latestPhysicalFunction = 0m;
+    private int activeTreatments = 0;
     
     private Dictionary<string, string> biomarkerCategories = new();
     private List<PromisResult> latestPromisResults = new();
@@ -335,6 +335,7 @@
 
                 if (healthProfile != null)
                 {
+                    CalculateHealthScore();
                     LoadBiomarkerCategories();
                     LoadLatestPromisResults();
                     LoadTreatmentRecommendations();
@@ -342,6 +343,135 @@
                 }
             }
         }
+    }
+
+    private void CalculateHealthScore()
+    {
+        if (healthProfile == null) return;
+
+        var biomarkerScore = CalculateBiomarkerScore();
+        var promisScore = CalculatePromisScore();
+        var treatmentScore = CalculateTreatmentScore();
+        var trendScore = CalculateTrendScore();
+
+        // Weighted calculation: Biomarkers (40%), PROMIS (30%), Treatments (20%), Trends (10%)
+        healthScore = (int)Math.Round(
+            (biomarkerScore * 0.4m) + 
+            (promisScore * 0.3m) + 
+            (treatmentScore * 0.2m) + 
+            (trendScore * 0.1m)
+        );
+
+        // Ensure score is between 0-100
+        healthScore = Math.Max(0, Math.Min(100, healthScore));
+    }
+
+    private decimal CalculateBiomarkerScore()
+    {
+        if (healthProfile?.BiomarkerResults.Any() != true) return 50m;
+
+        var latestBiomarkers = healthProfile.BiomarkerResults
+            .GroupBy(b => b.BiomarkerName)
+            .Select(g => g.OrderByDescending(b => b.TestDate).First())
+            .ToList();
+
+        totalBiomarkers = latestBiomarkers.Count;
+        biomarkersInOptimal = latestBiomarkers.Count(b => b.Status == BiomarkerStatus.Optimal);
+
+        if (totalBiomarkers == 0) return 50m;
+
+        var optimalPercentage = (decimal)biomarkersInOptimal / totalBiomarkers;
+        
+        // Score based on optimal percentage with bonus for critical markers
+        var baseScore = optimalPercentage * 100;
+        
+        // Bonus/penalty for critical health markers
+        var criticalMarkers = latestBiomarkers.Where(b => 
+            b.BiomarkerName.Contains("C-Reactive Protein") || 
+            b.BiomarkerName.Contains("HbA1c") || 
+            b.BiomarkerName.Contains("Vitamin D")).ToList();
+
+        var criticalScore = criticalMarkers.Any() ? 
+            criticalMarkers.Average(b => b.Status == BiomarkerStatus.Optimal ? 100m : 
+                                       b.Status == BiomarkerStatus.Normal ? 75m : 50m) : 75m;
+
+        return (baseScore + criticalScore) / 2;
+    }
+
+    private decimal CalculatePromisScore()
+    {
+        if (healthProfile?.PromisResults.Any() != true) return 50m;
+
+        var latestPromis = healthProfile.PromisResults
+            .GroupBy(p => p.Domain)
+            .Select(g => g.OrderByDescending(p => p.AssessmentDate).First())
+            .ToList();
+
+        if (!latestPromis.Any()) return 50m;
+
+        // Convert T-scores to 0-100 scale (T-scores typically range 20-80)
+        var promisScores = latestPromis.Select(p => 
+        {
+            var normalizedScore = Math.Max(0m, Math.Min(100m, (p.TScore - 20m) * 100m / 60m));
+            return normalizedScore;
+        }).ToList();
+
+        latestPhysicalFunction = latestPromis.FirstOrDefault(p => p.Domain == "Physical Function")?.TScore ?? 50m;
+
+        return promisScores.Average();
+    }
+
+    private decimal CalculateTreatmentScore()
+    {
+        if (healthProfile?.Treatments.Any() != true) return 50m;
+
+        var activeTreatments = healthProfile.Treatments
+            .Where(ut => ut.EndDate == null)
+            .ToList();
+
+        this.activeTreatments = activeTreatments.Count;
+
+        if (!activeTreatments.Any()) return 50m;
+
+        // Score based on treatment effectiveness and safety
+        var treatmentScores = activeTreatments.Select(ut =>
+        {
+            var effectivenessScore = ut.ResponseRating.HasValue ? ut.ResponseRating.Value * 20m : 50m; // 1-5 scale to 0-100
+            var safetyScore = ut.Treatment.SafetyRating * 20m; // 1-5 scale to 0-100
+            return (effectivenessScore + safetyScore) / 2m;
+        }).ToList();
+
+        return treatmentScores.Average();
+    }
+
+    private decimal CalculateTrendScore()
+    {
+        if (healthProfile?.BiomarkerResults.Any() != true) return 50m;
+
+        // Calculate trend based on recent biomarker changes
+        var recentBiomarkers = healthProfile.BiomarkerResults
+            .GroupBy(b => b.BiomarkerName)
+            .Select(g => g.OrderByDescending(b => b.TestDate).Take(2).ToList())
+            .Where(g => g.Count == 2)
+            .ToList();
+
+        if (!recentBiomarkers.Any()) return 50m;
+
+        var trendScores = recentBiomarkers.Select(biomarkerPair =>
+        {
+            var current = biomarkerPair[0];
+            var previous = biomarkerPair[1];
+            
+            // Determine if the trend is improving
+            var isImproving = current.Status == BiomarkerStatus.Optimal && previous.Status != BiomarkerStatus.Optimal;
+            var isDeclining = current.Status != BiomarkerStatus.Optimal && previous.Status == BiomarkerStatus.Optimal;
+            
+            return isImproving ? 100m : isDeclining ? 0m : 50m;
+        }).ToList();
+
+        healthTrend = (int)(trendScores.Average() - 50); // Convert to trend indicator
+
+        return trendScores.Average();
     }
 
     private void LoadBiomarkerCategories()
