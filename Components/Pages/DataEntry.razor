@@ -10,6 +10,7 @@
 @inject WellnessContext Context
 @inject DataValidationService ValidationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAuditService AuditService
 
 <PageTitle>Data Entry - Wellness Platform</PageTitle>
 
@@ -400,6 +401,17 @@
         {
             Context.BiomarkerResults.Add(biomarkerEntry);
             await Context.SaveChangesAsync();
+            
+            // Log the audit event
+            await AuditService.LogActionAsync(
+                action: "CREATE",
+                entityType: "BiomarkerResult",
+                entityId: biomarkerEntry.Id.ToString(),
+                newValues: biomarkerEntry,
+                reason: "User entered new biomarker data",
+                isSensitiveData: true
+            );
+            
             successMessage = $"Biomarker '{biomarkerEntry.BiomarkerName}' saved successfully!";
             InitializeEntries();
         }
@@ -434,6 +446,17 @@
         {
             Context.PromisResults.Add(promisEntry);
             await Context.SaveChangesAsync();
+            
+            // Log the audit event
+            await AuditService.LogActionAsync(
+                action: "CREATE",
+                entityType: "PromisResult",
+                entityId: promisEntry.Id.ToString(),
+                newValues: promisEntry,
+                reason: "User entered new PROMIS assessment data",
+                isSensitiveData: true
+            );
+            
             successMessage = $"PROMIS '{promisEntry.Domain}' assessment saved successfully!";
             InitializeEntries();
         }
@@ -468,6 +491,17 @@
         {
             Context.LifestyleMetrics.Add(lifestyleEntry);
             await Context.SaveChangesAsync();
+            
+            // Log the audit event
+            await AuditService.LogActionAsync(
+                action: "CREATE",
+                entityType: "LifestyleMetric",
+                entityId: lifestyleEntry.Id.ToString(),
+                newValues: lifestyleEntry,
+                reason: "User entered new lifestyle data",
+                isSensitiveData: true
+            );
+            
             successMessage = "Lifestyle metrics saved successfully!";
             InitializeEntries();
         }

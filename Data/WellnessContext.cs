@@ -16,6 +16,7 @@ namespace WellnessPlatform.Data
         public DbSet<Treatment> Treatments { get; set; }
         public DbSet<UserTreatment> UserTreatments { get; set; }
         public DbSet<LifestyleMetric> LifestyleMetrics { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
         
         protected override void OnModelCreating(ModelBuilder builder)
         {

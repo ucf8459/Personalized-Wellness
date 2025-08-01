@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WellnessPlatform.Data;
 
@@ -10,9 +11,11 @@ using WellnessPlatform.Data;
 namespace WellnessPlatform.Migrations
 {
     [DbContext(typeof(WellnessContext))]
-    partial class WellnessContextModelSnapshot : ModelSnapshot
+    [Migration("20250801211139_AddAuditLogging")]
+    partial class AddAuditLogging
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.7");
