@@ -1,0 +1,70 @@
+@using WellnessPlatform.Services
+@inject BiomarkerStatusService StatusService
+
+<div class="biomarker-status-indicator">
+    @if (indicator != null)
+    {
+        <div class="card border-@indicator.StatusColor h-100">
+            <div class="card-header d-flex justify-content-between align-items-center p-2">
+                <h6 class="mb-0">@indicator.BiomarkerName</h6>
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi @indicator.AlertIcon" title="@indicator.AlertLevel"></i>
+                    <i class="bi @indicator.TrendIcon" title="Trend: @indicator.Trend"></i>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div class="row">
+                    <div class="col-8">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="h5 mb-0 me-2">@indicator.CurrentValue</span>
+                            <small class="text-muted">@indicator.Units</small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-@indicator.StatusColor">@indicator.Status</span>
+                            @if (indicator.Severity > 0)
+                            {
+                                <span class="badge bg-secondary ms-1">Severity: @indicator.Severity</span>
+                            }
+                        </div>
+                        <div class="small text-muted">
+                            <div>Optimal: @indicator.OptimalRange @indicator.Units</div>
+                            <div>Reference: @indicator.ReferenceRange @indicator.Units</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-end">
+                            <div class="small text-muted">Last Updated</div>
+                            <div class="small">@indicator.LastUpdated.ToString("MMM dd")</div>
+                            <div class="small">@indicator.LastUpdated.ToString("HH:mm")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @if (indicator.AlertLevel >= AlertLevel.Warning)
+            {
+                <div class="card-footer p-2 bg-@(indicator.AlertLevel == AlertLevel.Critical ? "danger" : "warning") text-white">
+                    <small>
+                        <i class="bi @indicator.AlertIcon"></i>
+                        @GetAlertMessage(indicator)
+                    </small>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public BiomarkerStatusIndicator? indicator { get; set; }
+
+    private string GetAlertMessage(BiomarkerStatusIndicator indicator)
+    {
+        return indicator.AlertLevel switch
+        {
+            AlertLevel.Critical => $"CRITICAL: {indicator.BiomarkerName} requires immediate attention",
+            AlertLevel.Warning => $"WARNING: {indicator.BiomarkerName} needs monitoring",
+            AlertLevel.Info => $"INFO: {indicator.BiomarkerName} trending {indicator.Trend}",
+            _ => $"Normal: {indicator.BiomarkerName} is {indicator.Status}"
+        };
+    }
+} 

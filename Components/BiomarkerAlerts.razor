@@ -1,0 +1,103 @@
+@using WellnessPlatform.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject BiomarkerStatusService StatusService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<div class="biomarker-alerts">
+    @if (alerts.Any())
+    {
+        <div class="alert alert-info d-flex align-items-center mb-3">
+            <i class="bi bi-bell me-2"></i>
+            <strong>@alerts.Count active biomarker alerts</strong>
+        </div>
+
+        <div class="row">
+            @foreach (var alert in alerts)
+            {
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="alert alert-@GetAlertClass(alert.AlertLevel) border-start border-@GetAlertClass(alert.AlertLevel) border-4">
+                        <div class="d-flex align-items-start">
+                            <i class="bi @GetAlertIcon(alert.AlertLevel) me-2 mt-1"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="alert-heading mb-1">@alert.BiomarkerName</h6>
+                                <p class="mb-1 small">@alert.Message</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i>
+                                    @alert.Timestamp.ToString("MMM dd, HH:mm")
+                                </small>
+                            </div>
+                            @if (alert.IsActive)
+                            {
+                                <span class="badge bg-danger ms-2">Active</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong>All biomarkers are within normal ranges!</strong>
+            <div class="small mt-1">No active alerts at this time.</div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<BiomarkerAlert> alerts = new();
+    private Timer? refreshTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAlerts();
+        StartAutoRefresh();
+    }
+
+    public void Dispose()
+    {
+        refreshTimer?.Dispose();
+    }
+
+    private async Task LoadAlerts()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                alerts = await StatusService.GetActiveAlertsAsync(userId);
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void StartAutoRefresh()
+    {
+        refreshTimer = new Timer(async _ =>
+        {
+            await LoadAlerts();
+        }, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+    }
+
+    private string GetAlertClass(AlertLevel level) => level switch
+    {
+        AlertLevel.Critical => "danger",
+        AlertLevel.Warning => "warning",
+        AlertLevel.Info => "info",
+        _ => "success"
+    };
+
+    private string GetAlertIcon(AlertLevel level) => level switch
+    {
+        AlertLevel.Critical => "bi-exclamation-triangle-fill",
+        AlertLevel.Warning => "bi-exclamation-circle",
+        AlertLevel.Info => "bi-info-circle",
+        _ => "bi-check-circle"
+    };
+} 

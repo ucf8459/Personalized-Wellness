@@ -30,6 +30,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 builder.Services.AddScoped<TreatmentRecommendationService>();
 builder.Services.AddScoped<DataValidationService>();
 builder.Services.AddScoped<AuthorizationService>();
+builder.Services.AddScoped<BiomarkerStatusService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,263 @@
+@page "/status"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using WellnessPlatform.Models
+@using WellnessPlatform.Services
+@using Microsoft.AspNetCore.Authorization
+@using WellnessPlatform.Components
+@inject UserManager<ApplicationUser> UserManager
+@inject BiomarkerStatusService StatusService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+
+<PageTitle>Real-Time Status - Wellness Platform</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-activity"></i> Real-Time Biomarker Status</h2>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm" @onclick="RefreshStatus">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" @onclick="ShowAll">
+                        <i class="bi bi-eye"></i> All
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" @onclick="ShowWarnings">
+                        <i class="bi bi-exclamation-triangle"></i> Warnings
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" @onclick="ShowCritical">
+                        <i class="bi bi-exclamation-circle"></i> Critical
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    @if (summary != null)
+    {
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h3>@summary.TotalBiomarkers</h3>
+                        <p class="mb-0">Total Biomarkers</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h3>@summary.OptimalCount</h3>
+                        <p class="mb-0">Optimal (@summary.OptimalPercentage.ToString("F0")%)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <h3>@summary.WarningCount</h3>
+                        <p class="mb-0">Warnings (@summary.WarningPercentage.ToString("F0")%)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <h3>@summary.CriticalCount</h3>
+                        <p class="mb-0">Critical (@summary.CriticalPercentage.ToString("F0")%)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trend Summary -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-graph-up"></i> Trend Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="text-success">
+                                    <h4><i class="bi bi-arrow-up-circle"></i></h4>
+                                    <h5>@summary.ImprovingCount</h5>
+                                    <small>Improving</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-secondary">
+                                    <h4><i class="bi bi-dash-circle"></i></h4>
+                                    <h5>@(summary.TotalBiomarkers - summary.ImprovingCount - summary.DecliningCount)</h5>
+                                    <small>Stable</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-danger">
+                                    <h4><i class="bi bi-arrow-down-circle"></i></h4>
+                                    <h5>@summary.DecliningCount</h5>
+                                    <small>Declining</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-clock"></i> Last Updated</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <h3 class="text-primary">@summary.LastUpdated.ToString("MMM dd, yyyy")</h3>
+                        <p class="text-muted">@summary.LastUpdated.ToString("HH:mm:ss")</p>
+                        <small class="text-muted">Data refreshed every 5 minutes</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Active Alerts -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-bell"></i> Active Alerts</h5>
+                </div>
+                <div class="card-body">
+                    <BiomarkerAlerts />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Indicators -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-activity"></i> Biomarker Status Indicators</h5>
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Loading biomarker status...</p>
+                        </div>
+                    }
+                    else if (filteredIndicators.Any())
+                    {
+                        <div class="row">
+                            @foreach (var indicator in filteredIndicators)
+                            {
+                                <div class="col-md-6 col-lg-4 col-xl-3 mb-3">
+                                    <BiomarkerStatusCard indicator="indicator" />
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>No biomarker data available</strong>
+                                <div class="mt-2">Add biomarker data to see real-time status indicators.</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<BiomarkerStatusIndicator> allIndicators = new();
+    private List<BiomarkerStatusIndicator> filteredIndicators = new();
+    private BiomarkerSummary? summary;
+    private bool isLoading = true;
+    private Timer? refreshTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStatusData();
+        StartAutoRefresh();
+    }
+
+    public void Dispose()
+    {
+        refreshTimer?.Dispose();
+    }
+
+    private async Task LoadStatusData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    allIndicators = await StatusService.GetStatusIndicatorsAsync(userId);
+                    summary = await StatusService.GetBiomarkerSummaryAsync(userId);
+                    filteredIndicators = allIndicators;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading status data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void StartAutoRefresh()
+    {
+        refreshTimer = new Timer(async _ =>
+        {
+            await LoadStatusData();
+        }, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+    }
+
+    private async Task RefreshStatus()
+    {
+        await LoadStatusData();
+    }
+
+    private void ShowAll()
+    {
+        filteredIndicators = allIndicators;
+        StateHasChanged();
+    }
+
+    private void ShowWarnings()
+    {
+        filteredIndicators = allIndicators.Where(i => i.AlertLevel == AlertLevel.Warning).ToList();
+        StateHasChanged();
+    }
+
+    private void ShowCritical()
+    {
+        filteredIndicators = allIndicators.Where(i => i.AlertLevel == AlertLevel.Critical).ToList();
+        StateHasChanged();
+    }
+} 
