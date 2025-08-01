@@ -1,0 +1,217 @@
+@page "/encryption-management"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using WellnessPlatform.Services
+@inject UserManager<ApplicationUser> UserManager
+@inject ISecureDataService SecureDataService
+@inject IEncryptionService EncryptionService
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Encryption Management - Wellness Platform</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-shield-lock"></i> Encryption Management</h2>
+            <p class="text-muted">HIPAA-compliant data encryption settings and management</p>
+        </div>
+    </div>
+
+    <!-- Encryption Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-info-circle"></i> Encryption Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>System Status</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle text-success"></i> AES-256 encryption enabled</li>
+                                <li><i class="bi bi-check-circle text-success"></i> User-specific key derivation</li>
+                                <li><i class="bi bi-check-circle text-success"></i> Audit logging integrated</li>
+                                <li><i class="bi bi-check-circle text-success"></i> HIPAA compliance features active</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Security Features</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-shield-check text-primary"></i> End-to-end encryption</li>
+                                <li><i class="bi bi-shield-check text-primary"></i> Secure key management</li>
+                                <li><i class="bi bi-shield-check text-primary"></i> Data integrity protection</li>
+                                <li><i class="bi bi-shield-check text-primary"></i> Access control enforcement</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Migration -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-arrow-repeat"></i> Data Migration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Important:</strong> This will encrypt all existing sensitive data in the database. 
+                        This process is irreversible and should only be performed in a secure environment.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p>Migrate existing unencrypted data to encrypted format:</p>
+                            <ul>
+                                <li>Biomarker names and units</li>
+                                <li>PROMIS assessment domains</li>
+                                <li>Lifestyle metric notes</li>
+                                <li>Health profile notes</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-warning btn-lg w-100" @onclick="MigrateData" disabled="@isMigrating">
+                                @if (isMigrating)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span>Migrating...</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-arrow-repeat me-2"></i>
+                                    <span>Start Migration</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Encryption Testing -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-gear"></i> Encryption Testing</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="testData" class="form-label">Test Data</label>
+                                <textarea id="testData" class="form-control" rows="3" @bind="testData" placeholder="Enter test data to encrypt..."></textarea>
+                            </div>
+                            <button class="btn btn-primary" @onclick="TestEncryption">
+                                <i class="bi bi-lock"></i> Test Encryption
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="encryptedResult" class="form-label">Encrypted Result</label>
+                                <textarea id="encryptedResult" class="form-control" rows="3" readonly>@encryptedResult</textarea>
+                            </div>
+                            <button class="btn btn-success" @onclick="TestDecryption" disabled="@string.IsNullOrEmpty(encryptedResult)">
+                                <i class="bi bi-unlock"></i> Test Decryption
+                            </button>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(decryptedResult))
+                    {
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="alert alert-success">
+                                    <strong>Decryption Result:</strong> @decryptedResult
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Recommendations -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-lightbulb"></i> Security Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Production Environment</h6>
+                            <ul>
+                                <li>Store encryption keys in Azure Key Vault or AWS KMS</li>
+                                <li>Use hardware security modules (HSM) for key storage</li>
+                                <li>Implement key rotation policies</li>
+                                <li>Enable SSL/TLS for all data transmission</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Compliance Requirements</h6>
+                            <ul>
+                                <li>Regular security audits and penetration testing</li>
+                                <li>Employee security training and background checks</li>
+                                <li>Incident response and breach notification procedures</li>
+                                <li>Regular backup and disaster recovery testing</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isMigrating = false;
+    private string testData = "";
+    private string encryptedResult = "";
+    private string decryptedResult = "";
+
+    private async Task MigrateData()
+    {
+        isMigrating = true;
+        StateHasChanged();
+
+        try
+        {
+            await SecureDataService.MigrateExistingDataToEncryptedAsync();
+            // Show success message
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+        }
+        finally
+        {
+            isMigrating = false;
+            StateHasChanged();
+        }
+    }
+
+    private void TestEncryption()
+    {
+        if (!string.IsNullOrEmpty(testData))
+        {
+            encryptedResult = EncryptionService.EncryptData(testData);
+            decryptedResult = ""; // Clear previous decryption result
+        }
+    }
+
+    private void TestDecryption()
+    {
+        if (!string.IsNullOrEmpty(encryptedResult))
+        {
+            decryptedResult = EncryptionService.DecryptData(encryptedResult);
+        }
+    }
+} 

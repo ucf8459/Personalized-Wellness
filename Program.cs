@@ -35,6 +35,8 @@ builder.Services.AddScoped<CorrelationAnalysisService>();
 builder.Services.AddScoped<TreatmentEffectivenessService>();
 builder.Services.AddScoped<DataImportExportService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IEncryptionService, EncryptionService>();
+builder.Services.AddScoped<ISecureDataService, SecureDataService>();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
