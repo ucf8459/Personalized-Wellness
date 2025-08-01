@@ -9212,6 +9212,304 @@
       ]
     },
     {
+      "Route": "js/charts.js",
+      "AssetFile": "js/charts.js.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000524658972"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1905"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE=\""
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw="
+        }
+      ]
+    },
+    {
+      "Route": "js/charts.js",
+      "AssetFile": "js/charts.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "11138"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw="
+        }
+      ]
+    },
+    {
+      "Route": "js/charts.js.gz",
+      "AssetFile": "js/charts.js.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1905"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE="
+        }
+      ]
+    },
+    {
+      "Route": "js/charts.mx6n2lagjn.js",
+      "AssetFile": "js/charts.js.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000524658972"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1905"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE=\""
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "mx6n2lagjn"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw="
+        },
+        {
+          "Name": "label",
+          "Value": "js/charts.js"
+        }
+      ]
+    },
+    {
+      "Route": "js/charts.mx6n2lagjn.js",
+      "AssetFile": "js/charts.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "11138"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "mx6n2lagjn"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw="
+        },
+        {
+          "Name": "label",
+          "Value": "js/charts.js"
+        }
+      ]
+    },
+    {
+      "Route": "js/charts.mx6n2lagjn.js.gz",
+      "AssetFile": "js/charts.js.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1905"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "mx6n2lagjn"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE="
+        },
+        {
+          "Name": "label",
+          "Value": "js/charts.js.gz"
+        }
+      ]
+    },
+    {
       "Route": "lib/bootstrap/dist/css/bootstrap-grid.bqjiyaj88i.css",
       "AssetFile": "lib/bootstrap/dist/css/bootstrap-grid.css.gz",
       "Selectors": [

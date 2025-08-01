@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "1SpVzVutJ4zh5Vt6aV4YV6S1pakTqAz839JWe/enZF8=",
+  "Hash": "nTfrz8OX7MG2LKDHts/ddjxFjKFWs/e1WZKFeFWzEpA=",
   "Source": "WellnessPlatform",
   "BasePath": "_content/WellnessPlatform",
   "Mode": "Default",
@@ -3608,6 +3608,27 @@
       "OriginalItemSpec": "/Users/seanlaneve/.nuget/packages/microsoft.aspnetcore.identity.ui/9.0.7/staticwebassets/V5/lib/bootstrap/dist/js/bootstrap.min.js"
     },
     {
+      "Identity": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/obj/Debug/net9.0/compressed/zff69vpfuk-mx6n2lagjn.gz",
+      "SourceId": "WellnessPlatform",
+      "SourceType": "Discovered",
+      "ContentRoot": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/obj/Debug/net9.0/compressed/",
+      "BasePath": "_content/WellnessPlatform",
+      "RelativePath": "js/charts#[.{fingerprint=mx6n2lagjn}]?.js.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/wwwroot/js/charts.js",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "9dhe895t7w",
+      "Integrity": "basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/wwwroot/js/charts.js"
+    },
+    {
       "Identity": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/obj/Debug/net9.0/compressed/zzna4nrm5w-notf2xhcfb.gz",
       "SourceId": "Microsoft.AspNetCore.Identity.UI",
       "SourceType": "Package",
@@ -3711,6 +3732,27 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot/favicon.png"
+    },
+    {
+      "Identity": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/wwwroot/js/charts.js",
+      "SourceId": "WellnessPlatform",
+      "SourceType": "Discovered",
+      "ContentRoot": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/wwwroot/",
+      "BasePath": "_content/WellnessPlatform",
+      "RelativePath": "js/charts#[.{fingerprint}]?.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "mx6n2lagjn",
+      "Integrity": "2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/js/charts.js"
     },
     {
       "Identity": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/wwwroot/lib/bootstrap/dist/css/bootstrap-grid.css",
@@ -13546,6 +13588,304 @@
         {
           "Name": "integrity",
           "Value": "sha256-dPsEfcY62KV0JlODP7RM/tGRGtSPreA0+SM+3dB0kHs="
+        }
+      ]
+    },
+    {
+      "Route": "js/charts.js",
+      "AssetFile": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/obj/Debug/net9.0/compressed/zff69vpfuk-mx6n2lagjn.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000524658972"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1905"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw="
+        }
+      ]
+    },
+    {
+      "Route": "js/charts.js",
+      "AssetFile": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/wwwroot/js/charts.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "11138"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw="
+        }
+      ]
+    },
+    {
+      "Route": "js/charts.js.gz",
+      "AssetFile": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/obj/Debug/net9.0/compressed/zff69vpfuk-mx6n2lagjn.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1905"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE="
+        }
+      ]
+    },
+    {
+      "Route": "js/charts.mx6n2lagjn.js",
+      "AssetFile": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/obj/Debug/net9.0/compressed/zff69vpfuk-mx6n2lagjn.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000524658972"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1905"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "mx6n2lagjn"
+        },
+        {
+          "Name": "label",
+          "Value": "js/charts.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw="
+        }
+      ]
+    },
+    {
+      "Route": "js/charts.mx6n2lagjn.js",
+      "AssetFile": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/wwwroot/js/charts.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "11138"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "mx6n2lagjn"
+        },
+        {
+          "Name": "label",
+          "Value": "js/charts.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-2tiMVlzyPCkcm/qxhzwcCHZl99yFPwmEV/xAbXAYrFw="
+        }
+      ]
+    },
+    {
+      "Route": "js/charts.mx6n2lagjn.js.gz",
+      "AssetFile": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/obj/Debug/net9.0/compressed/zff69vpfuk-mx6n2lagjn.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1905"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 01 Aug 2025 18:55:58 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "mx6n2lagjn"
+        },
+        {
+          "Name": "label",
+          "Value": "js/charts.js.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-basWwYj2Xblj7gOVu8U3Zrp/B+W74+DTVll9m5RMWzE="
         }
       ]
     },

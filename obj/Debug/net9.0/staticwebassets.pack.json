@@ -13,6 +13,10 @@
       "PackagePath": "staticwebassets/favicon.png"
     },
     {
+      "Id": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/wwwroot/js/charts.js",
+      "PackagePath": "staticwebassets/js/charts.js"
+    },
+    {
       "Id": "/Users/seanlaneve/Personalized Wellness/WellnessPlatform/wwwroot/lib/bootstrap/dist/css/bootstrap-grid.css",
       "PackagePath": "staticwebassets/lib/bootstrap/dist/css/bootstrap-grid.css"
     },

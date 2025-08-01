@@ -309,3 +309,4 @@
 /Users/seanlaneve/Personalized Wellness/WellnessPlatform/obj/Debug/net9.0/WellnessPlatform.RazorAssemblyInfo.cache
 /Users/seanlaneve/Personalized Wellness/WellnessPlatform/obj/Debug/net9.0/WellnessPlatform.RazorAssemblyInfo.cs
 /Users/seanlaneve/Personalized Wellness/WellnessPlatform/obj/Debug/net9.0/WellnessPlatform.sourcelink.json
+/Users/seanlaneve/Personalized Wellness/WellnessPlatform/obj/Debug/net9.0/compressed/zff69vpfuk-mx6n2lagjn.gz

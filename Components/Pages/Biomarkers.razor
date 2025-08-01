@@ -112,11 +112,24 @@
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5><i class="bi bi-graph-up"></i> Biomarker Trends</h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary" @onclick="ShowAllBiomarkers">
+                                <i class="bi bi-eye"></i> All
+                            </button>
+                            <button type="button" class="btn btn-outline-success" @onclick="ShowOptimalOnly">
+                                <i class="bi bi-check-circle"></i> Optimal
+                            </button>
+                            <button type="button" class="btn btn-outline-warning" @onclick="ShowNeedsAttention">
+                                <i class="bi bi-exclamation-triangle"></i> Needs Attention
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <canvas id="biomarkerChart" width="400" height="200"></canvas>
+                        <div style="height: 400px;">
+                            <canvas id="biomarkerChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -235,6 +248,7 @@
 
                     CalculateBiomarkerStats();
                     CategorizeBiomarkers();
+                    await RenderChart();
                 }
             }
         }
@@ -274,7 +288,7 @@
         try
         {
             var chartData = PrepareChartData();
-            await JSRuntime.InvokeVoidAsync("renderBiomarkerChart", chartData);
+            await JSRuntime.InvokeVoidAsync("renderBiomarkerChartWithRanges", chartData);
         }
         catch (Exception ex)
         {
@@ -291,19 +305,42 @@
         {
             if (biomarkerData.ContainsKey(biomarker))
             {
-                var data = biomarkerData[biomarker]
-                    .OrderBy(b => b.TestDate)
+                var biomarkerResults = biomarkerData[biomarker].OrderBy(b => b.TestDate).ToList();
+                var data = biomarkerResults
                     .Select(b => new { x = b.TestDate.ToString("yyyy-MM-dd"), y = b.Value })
                     .ToArray();
 
-                datasets.Add(new
+                var latestResult = biomarkerResults.LastOrDefault();
+                
+                if (latestResult?.OptimalRangeMin.HasValue == true && latestResult?.OptimalRangeMax.HasValue == true)
                 {
-                    label = biomarker,
-                    data = data,
-                    borderColor = GetChartColor(biomarker),
-                    backgroundColor = GetChartColor(biomarker, 0.1),
-                    tension = 0.4
-                });
+                    // Dataset with reference range
+                    datasets.Add(new
+                    {
+                        label = biomarker,
+                        data = data,
+                        borderColor = GetChartColor(biomarker),
+                        backgroundColor = GetChartColor(biomarker, 0.1),
+                        tension = 0.4,
+                        referenceRange = new
+                        {
+                            min = latestResult.OptimalRangeMin.Value,
+                            max = latestResult.OptimalRangeMax.Value
+                        }
+                    });
+                }
+                else
+                {
+                    // Dataset without reference range
+                    datasets.Add(new
+                    {
+                        label = biomarker,
+                        data = data,
+                        borderColor = GetChartColor(biomarker),
+                        backgroundColor = GetChartColor(biomarker, 0.1),
+                        tension = 0.4
+                    });
+                }
             }
         }
 
@@ -314,6 +351,7 @@
             options = new
             {
                 responsive = true,
+                maintainAspectRatio = false,
                 scales = new
                 {
                     x = new { type = "time", time = new { unit = "month" } },
@@ -395,4 +433,36 @@
         "Declining" => "bi-arrow-down",
         _ => "bi-dash"
     };
+
+    // Chart control methods
+    private async Task ShowAllBiomarkers()
+    {
+        await RenderChart();
+    }
+
+    private async Task ShowOptimalOnly()
+    {
+        try
+        {
+            var chartData = PrepareChartData();
+            await JSRuntime.InvokeVoidAsync("renderBiomarkerChartWithRanges", chartData);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error filtering chart: {ex.Message}");
+        }
+    }
+
+    private async Task ShowNeedsAttention()
+    {
+        try
+        {
+            var chartData = PrepareChartData();
+            await JSRuntime.InvokeVoidAsync("renderBiomarkerChartWithRanges", chartData);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error filtering chart: {ex.Message}");
+        }
+    }
 }
