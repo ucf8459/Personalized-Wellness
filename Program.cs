@@ -32,6 +32,7 @@ builder.Services.AddScoped<DataValidationService>();
 builder.Services.AddScoped<AuthorizationService>();
 builder.Services.AddScoped<BiomarkerStatusService>();
 builder.Services.AddScoped<CorrelationAnalysisService>();
+builder.Services.AddScoped<TreatmentEffectivenessService>();
 
 var app = builder.Build();
 

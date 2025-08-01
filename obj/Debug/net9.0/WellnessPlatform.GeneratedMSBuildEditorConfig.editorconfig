@@ -76,6 +76,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9TdGF0dXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/seanlaneve/Personalized Wellness/WellnessPlatform/Components/Pages/TreatmentEffectiveness.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9UcmVhdG1lbnRFZmZlY3RpdmVuZXNzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/seanlaneve/Personalized Wellness/WellnessPlatform/Components/Pages/Treatments.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9UcmVhdG1lbnRzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 

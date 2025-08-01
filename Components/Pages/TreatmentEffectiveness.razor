@@ -1,0 +1,636 @@
+@page "/treatment-effectiveness"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using WellnessPlatform.Models
+@using WellnessPlatform.Services
+@using Microsoft.AspNetCore.Authorization
+@inject UserManager<ApplicationUser> UserManager
+@inject TreatmentEffectivenessService EffectivenessService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+
+<PageTitle>Treatment Effectiveness Tracking - Wellness Platform</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-clipboard2-pulse"></i> Treatment Effectiveness Tracking</h2>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm" @onclick="RefreshData">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" @onclick="ShowAll">
+                        <i class="bi bi-eye"></i> All
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" @onclick="ShowEffective">
+                        <i class="bi bi-check-circle"></i> Effective
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="effectivenessTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="outcomes-tab" data-bs-toggle="tab" data-bs-target="#outcomes" type="button" role="tab">
+                        <i class="bi bi-clipboard-data"></i> Treatment Outcomes
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button" role="tab">
+                        <i class="bi bi-graph-up"></i> Treatment Timeline
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="comparison-tab" data-bs-toggle="tab" data-bs-target="#comparison" type="button" role="tab">
+                        <i class="bi bi-bar-chart"></i> Treatment Comparisons
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="recommendations-tab" data-bs-toggle="tab" data-bs-target="#recommendations" type="button" role="tab">
+                        <i class="bi bi-lightbulb"></i> Personalized Recommendations
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="effectivenessTabContent">
+        <!-- Treatment Outcomes -->
+        <div class="tab-pane fade show active" id="outcomes" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-clipboard-data"></i> Treatment Outcomes Analysis</h5>
+                    <p class="text-muted mb-0">Comprehensive analysis of treatment effectiveness across biomarkers, PROMIS scores, and side effects</p>
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Analyzing treatment outcomes...</p>
+                        </div>
+                    }
+                    else if (treatmentOutcomes.Any())
+                    {
+                        <div class="row">
+                            @foreach (var outcome in filteredOutcomes)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card border-@outcome.EffectivenessColor h-100">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">@outcome.TreatmentName</h6>
+                                            <span class="badge bg-@outcome.EffectivenessColor">
+                                                @outcome.EffectivenessLevel
+                                            </span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span>Effectiveness Score:</span>
+                                                    <strong class="text-@outcome.EffectivenessColor">
+                                                        @outcome.OverallEffectiveness.ToString("F0")%
+                                                    </strong>
+                                                </div>
+                                                <div class="progress mb-2">
+                                                    <div class="progress-bar bg-@outcome.EffectivenessColor" 
+                                                         style="width: @outcome.OverallEffectiveness%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row text-center mb-3">
+                                                <div class="col-6">
+                                                    <div class="border-end">
+                                                        <div class="text-muted small">Category</div>
+                                                        <div class="fw-bold">@outcome.TreatmentCategory</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="text-muted small">Started</div>
+                                                    <div class="fw-bold">@outcome.StartDate.ToString("MMM yyyy")</div>
+                                                </div>
+                                            </div>
+                                            @if (outcome.BiomarkerOutcomes.Any())
+                                            {
+                                                <div class="mb-3">
+                                                    <h6 class="text-muted">Biomarker Outcomes</h6>
+                                                    @foreach (var biomarker in outcome.BiomarkerOutcomes.Take(3))
+                                                    {
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <small>@biomarker.BiomarkerName</small>
+                                                            <span class="badge bg-@biomarker.ChangeColor">
+                                                                @biomarker.ImprovementPercentage.ToString("F1")%
+                                                            </span>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            @if (outcome.PromisOutcomes.Any())
+                                            {
+                                                <div class="mb-3">
+                                                    <h6 class="text-muted">PROMIS Outcomes</h6>
+                                                    @foreach (var promis in outcome.PromisOutcomes.Take(2))
+                                                    {
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <small>@promis.Domain</small>
+                                                            <span class="badge bg-@promis.ChangeColor">
+                                                                @promis.TScoreChange.ToString("F1")
+                                                            </span>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            <div class="row text-center">
+                                                <div class="col-6">
+                                                    <div class="border-end">
+                                                        <div class="text-muted small">Side Effects</div>
+                                                        <div class="fw-bold text-@outcome.SideEffectAnalysis.SeverityColor">
+                                                            @outcome.SideEffectAnalysis.SeverityLevel
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="text-muted small">Adherence</div>
+                                                    <div class="fw-bold">@outcome.AdherenceScore.ToString("F0")%</div>
+                                                </div>
+                                            </div>
+                                            @if (outcome.ResponseRating.HasValue)
+                                            {
+                                                <div class="text-center mt-2">
+                                                    <div class="text-muted small">Your Rating</div>
+                                                    <div>
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            <i class="bi @(i <= outcome.ResponseRating ? "bi-star-fill text-warning" : "bi-star text-muted")"></i>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>No treatment outcomes available</strong>
+                                <div class="mt-2">Start treatments to see effectiveness analysis.</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Treatment Timeline -->
+        <div class="tab-pane fade" id="timeline" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-graph-up"></i> Treatment Timeline Analysis</h5>
+                    <p class="text-muted mb-0">Track treatment progress over time with biomarker and PROMIS measurements</p>
+                </div>
+                <div class="card-body">
+                    @if (selectedTreatmentTimeline != null)
+                    {
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>@selectedTreatmentTimeline.TreatmentName</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <div class="text-muted small">Start Date</div>
+                                                <div class="fw-bold">@selectedTreatmentTimeline.StartDate.ToString("MMM dd, yyyy")</div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-muted small">Dosage</div>
+                                                <div class="fw-bold">@selectedTreatmentTimeline.Dosage</div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-6">
+                                                <div class="text-muted small">Frequency</div>
+                                                <div class="fw-bold">@selectedTreatmentTimeline.Frequency</div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-muted small">Status</div>
+                                                <div class="fw-bold">@(selectedTreatmentTimeline.EndDate.HasValue ? "Completed" : "Ongoing")</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Effectiveness Trends</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        @if (selectedTreatmentTimeline.EffectivenessTrends.Any())
+                                        {
+                                            @foreach (var trend in selectedTreatmentTimeline.EffectivenessTrends.Take(3))
+                                            {
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <small>@trend.MetricName</small>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi @(trend.TrendDirection == "Improving" ? "bi-arrow-up-circle text-success" : "bi-arrow-down-circle text-danger")"></i>
+                                                        <span class="ms-1 small">@trend.TrendDirection</span>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="text-muted small">No trend data available</div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (selectedTreatmentTimeline.BiomarkerTimeline.Any())
+                        {
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6>Biomarker Timeline</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Biomarker</th>
+                                                    <th>Value</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var point in selectedTreatmentTimeline.BiomarkerTimeline.OrderByDescending(p => p.Date).Take(10))
+                                                {
+                                                    <tr>
+                                                        <td>@point.Date.ToString("MMM dd")</td>
+                                                        <td>@point.BiomarkerName</td>
+                                                        <td>@point.Value @point.Units</td>
+                                                        <td><span class="badge bg-@(point.Status == BiomarkerStatus.Optimal ? "success" : point.Status == BiomarkerStatus.Normal ? "info" : "warning")">@point.Status</span></td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (selectedTreatmentTimeline.PromisTimeline.Any())
+                        {
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>PROMIS Timeline</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Domain</th>
+                                                    <th>T-Score</th>
+                                                    <th>Percentile</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var point in selectedTreatmentTimeline.PromisTimeline.OrderByDescending(p => p.Date).Take(10))
+                                                {
+                                                    <tr>
+                                                        <td>@point.Date.ToString("MMM dd")</td>
+                                                        <td>@point.Domain</td>
+                                                        <td>@point.TScore.ToString("F1")</td>
+                                                        <td>@point.PercentileRank.ToString("F0")%</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Select a treatment to view timeline</strong>
+                                <div class="mt-2">Choose a treatment from the outcomes tab to see detailed timeline analysis.</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Treatment Comparisons -->
+        <div class="tab-pane fade" id="comparison" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-bar-chart"></i> Treatment Comparisons</h5>
+                    <p class="text-muted mb-0">Compare treatment effectiveness across different metrics</p>
+                </div>
+                <div class="card-body">
+                    @if (treatmentComparisons.Any())
+                    {
+                        <div class="row">
+                            @foreach (var comparison in treatmentComparisons)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card border-@comparison.ComparisonColor h-100">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">@comparison.Treatment1 vs @comparison.Treatment2</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span>Effectiveness Difference:</span>
+                                                    <strong class="text-@comparison.ComparisonColor">
+                                                        @comparison.EffectivenessDifference.ToString("F1")%
+                                                    </strong>
+                                                </div>
+                                                <div class="progress mb-2">
+                                                    <div class="progress-bar bg-@comparison.ComparisonColor" 
+                                                         style="width: @(Math.Min(Math.Abs(comparison.EffectivenessDifference), 100))%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row text-center mb-3">
+                                                <div class="col-6">
+                                                    <div class="border-end">
+                                                        <div class="text-muted small">Biomarker Improvement</div>
+                                                        <div class="fw-bold">@comparison.BiomarkerImprovement1.ToString("F1")% vs @comparison.BiomarkerImprovement2.ToString("F1")%</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="text-muted small">PROMIS Improvement</div>
+                                                    <div class="fw-bold">@comparison.PromisImprovement1.ToString("F1") vs @comparison.PromisImprovement2.ToString("F1")</div>
+                                                </div>
+                                            </div>
+                                            <div class="row text-center mb-3">
+                                                <div class="col-6">
+                                                    <div class="border-end">
+                                                        <div class="text-muted small">Side Effect Severity</div>
+                                                        <div class="fw-bold">@comparison.SideEffectSeverity1.ToString("F1") vs @comparison.SideEffectSeverity2.ToString("F1")</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="text-muted small">Adherence Difference</div>
+                                                    <div class="fw-bold">@comparison.AdherenceDifference.ToString("F1")%</div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-info-circle"></i>
+                                                    @comparison.Recommendation
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>No treatment comparisons available</strong>
+                                <div class="mt-2">Need at least two treatments to generate comparisons.</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Personalized Recommendations -->
+        <div class="tab-pane fade" id="recommendations" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-lightbulb"></i> Personalized Treatment Recommendations</h5>
+                    <p class="text-muted mb-0">AI-powered recommendations based on your treatment history and health profile</p>
+                </div>
+                <div class="card-body">
+                    @if (personalizedRecommendations != null)
+                    {
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Current Health Status</h6>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h3 class="text-primary">@personalizedRecommendations.CurrentHealthStatus</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Monitoring Plan</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="mb-0">@personalizedRecommendations.MonitoringPlan</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (personalizedRecommendations.HealthGoals.Any())
+                        {
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6>Health Goals</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        @foreach (var goal in personalizedRecommendations.HealthGoals)
+                                        {
+                                            <li class="list-group-item">
+                                                <i class="bi bi-target text-primary me-2"></i>
+                                                @goal
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        }
+
+                        @if (personalizedRecommendations.RecommendedTreatments.Any())
+                        {
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Recommended Treatments</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        @foreach (var treatment in personalizedRecommendations.RecommendedTreatments.Take(6))
+                                        {
+                                            <div class="col-md-6 col-lg-4 mb-3">
+                                                <div class="card border-@treatment.EffectivenessColor h-100">
+                                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                                        <h6 class="mb-0">@treatment.TreatmentName</h6>
+                                                        <span class="badge bg-@treatment.EffectivenessColor">
+                                                            @treatment.ExpectedEffectiveness.ToString("F0")%
+                                                        </span>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="mb-2">
+                                                            <small class="text-muted">Category:</small>
+                                                            <div class="fw-bold">@treatment.TreatmentCategory</div>
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <small class="text-muted">Evidence Level:</small>
+                                                            <div class="fw-bold">@treatment.EvidenceLevel</div>
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <small class="text-muted">Safety Rating:</small>
+                                                            <div class="fw-bold">
+                                                                @for (int i = 1; i <= 5; i++)
+                                                                {
+                                                                    <i class="bi @(i <= treatment.SafetyRating ? "bi-shield-fill text-success" : "bi-shield text-muted")"></i>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                        <div class="row text-center">
+                                                            <div class="col-6">
+                                                                <div class="text-muted small">Expected Biomarker Improvements</div>
+                                                                <div class="fw-bold">@treatment.ExpectedBiomarkerImprovements</div>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <div class="text-muted small">Expected PROMIS Improvements</div>
+                                                                <div class="fw-bold">@treatment.ExpectedPromisImprovements</div>
+                                                            </div>
+                                                        </div>
+                                                        @if (treatment.MonitoringRequired)
+                                                        {
+                                                            <div class="mt-2">
+                                                                <span class="badge bg-warning">Monitoring Required</span>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>No personalized recommendations available</strong>
+                                <div class="mt-2">Complete more treatments to receive personalized recommendations.</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<TreatmentOutcome> treatmentOutcomes = new();
+    private List<TreatmentOutcome> filteredOutcomes = new();
+    private List<TreatmentComparison> treatmentComparisons = new();
+    private PersonalizedTreatmentRecommendation? personalizedRecommendations;
+    private TreatmentTimeline? selectedTreatmentTimeline;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEffectivenessData();
+    }
+
+    private async Task LoadEffectivenessData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    treatmentOutcomes = await EffectivenessService.GetTreatmentOutcomesAsync(userId);
+                    filteredOutcomes = treatmentOutcomes;
+                    treatmentComparisons = await EffectivenessService.CompareTreatmentsAsync(userId);
+                    personalizedRecommendations = await EffectivenessService.GetPersonalizedRecommendationsAsync(userId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading effectiveness data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadEffectivenessData();
+    }
+
+    private void ShowAll()
+    {
+        filteredOutcomes = treatmentOutcomes;
+        StateHasChanged();
+    }
+
+    private void ShowEffective()
+    {
+        filteredOutcomes = treatmentOutcomes.Where(o => o.OverallEffectiveness >= 70).ToList();
+        StateHasChanged();
+    }
+
+    private async Task ViewTimeline(int treatmentId)
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                selectedTreatmentTimeline = await EffectivenessService.GetTreatmentTimelineAsync(userId, treatmentId);
+                StateHasChanged();
+            }
+        }
+    }
+} 
